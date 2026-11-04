@@ -1,18 +1,27 @@
 #ifndef GAME_HH
 #define GAME_HH
 
-#include <tuple>
 #include "player.hh"
+
+typedef struct Vector2 {
+    float x;
+    float y;
+};
 
 // ball directions
 typedef enum direction{
     dir_nil,
-    dir_left_top,
-    dir_left_mid,
-    dir_left_low,
-    dir_right_top,
-    dir_right_mid,
-    dir_right_low
+    dir_left,
+    dir_right
+};
+
+typedef struct Ball {
+    direction dir = dir_nil;
+
+    Vector2 pos;
+    Vector2 velocity;
+    float friction = 0.1f; // how much velocity ball inherits from paddle hit (paddle_vel * friction)
+
 };
 
 class Game{
@@ -20,11 +29,11 @@ class Game{
     private:
         Player p1;
         Player p2;
+        Ball ball = {};
         int score;
         bool gameActive;
         int gameID;
-        std::tuple<int, int> ballPos; // testing tuple for pos
-        direction ballDirection = dir_nil;
+
 
     private:
         Game();
@@ -33,6 +42,7 @@ class Game{
         bool setScore(int s);
         int getScore();
         bool update();
+        bool updateBall();
 
 };
 

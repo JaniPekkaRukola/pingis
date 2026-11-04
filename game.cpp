@@ -24,3 +24,21 @@ bool Game::update(){
     // update players
     // update ball
 }
+
+bool Game::updateBall(){
+
+    if (ball.dir == dir_nil) return;
+
+
+    // x-axis
+    if (ball.dir == dir_left){
+        ball.pos.x -= ball.velocity.x;
+    }
+    if (ball.dir == dir_right){
+        ball.pos.x += ball.velocity.x;
+    }
+
+    // y-axis
+    // ball.pos.y
+
+}
