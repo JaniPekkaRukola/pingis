@@ -27,18 +27,50 @@ bool Game::update(){
 
 bool Game::updateBall(){
 
-    if (ball.dir == dir_nil) return;
-
+    // TODO: escape if stationary
 
     // x-axis
-    if (ball.dir == dir_left){
-        ball.pos.x -= ball.velocity.x;
+    if (ball.dir_right){
+        ball.hitbox.x += ball.velocity.x;
     }
-    if (ball.dir == dir_right){
-        ball.pos.x += ball.velocity.x;
+    else{
+        ball.hitbox.x -= ball.velocity.x;
     }
 
     // y-axis
-    // ball.pos.y
+    if (ball.dir_up){
+        ball.hitbox.y += ball.velocity.y;
+    }
+    else{
+        ball.hitbox.y -= ball.velocity.y;
+    }
 
+}
+
+Vector2 Game::getBallPos(){
+    return (Vector2){this->ball.hitbox.x, this->ball.hitbox.y};
+}
+
+bool Game::checkCollision(Player p){
+
+    Hitbox paddle = p.getHitbox();
+    Vector2 pos = getBallPos();
+
+    if (pos.y >= paddle.y && pos.y <= (paddle.y + paddle.height)){
+        // y collision
+        
+        if (ball.dir_right){
+            if (pos.x >= paddle.x && pos.x <= (paddle.x + paddle.width)){
+                return true;    // x collision (going right)
+            }
+        }
+        else{
+            if (pos.x <= paddle.x && pos.x >= (paddle.x - paddle.width)){
+                return true;    // x collision (going left)
+            }
+        }
+    }
+
+    // no collision
+    return false;
 }

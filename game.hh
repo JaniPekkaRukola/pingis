@@ -2,23 +2,17 @@
 #define GAME_HH
 
 #include "player.hh"
+#include "struct.hh"
 
-typedef struct Vector2 {
-    float x;
-    float y;
-};
-
-// ball directions
-typedef enum direction{
-    dir_nil,
-    dir_left,
-    dir_right
-};
 
 typedef struct Ball {
-    direction dir = dir_nil;
 
-    Vector2 pos;
+    // ngl this kinda shit
+    bool dir_up = true;     // true = up,  false = down
+    bool dir_right = true;  // true = right,  false = left
+
+    // Vector2 pos;
+    Hitbox hitbox;
     Vector2 velocity;
     float friction = 0.1f; // how much velocity ball inherits from paddle hit (paddle_vel * friction)
 
@@ -43,6 +37,9 @@ class Game{
         int getScore();
         bool update();
         bool updateBall();
+        bool checkCollision(Player p);
+        Vector2 getBallPos();
+
 
 };
 
