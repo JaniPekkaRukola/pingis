@@ -6,6 +6,7 @@ Game::Game(){
     this->gameID = 0;
     this->p1 = Player();
     this->p2 = Player();
+    this->ball = Ball();
 }
 
 Game::~Game(){}
@@ -22,44 +23,33 @@ int Game::getScore(){
 
 bool Game::update(){
     // update players
+    this->p1.update();
+    this->p2.update();
+
     // update ball
+    this->ball.update();
 }
 
-bool Game::updateBall(){
+bool Game::draw(){
+    // draw players
+    p1.draw();
+    p2.draw();
 
-    // TODO: escape if stationary
-
-    // x-axis
-    if (ball.dir_right){
-        ball.hitbox.x += ball.velocity.x;
-    }
-    else{
-        ball.hitbox.x -= ball.velocity.x;
-    }
-
-    // y-axis
-    if (ball.dir_up){
-        ball.hitbox.y += ball.velocity.y;
-    }
-    else{
-        ball.hitbox.y -= ball.velocity.y;
-    }
-
-}
-
-Vector2 Game::getBallPos(){
-    return (Vector2){this->ball.hitbox.x, this->ball.hitbox.y};
+    // draw ball
+    ball.draw();
 }
 
 bool Game::checkCollision(Player p){
 
     Hitbox paddle = p.getHitbox();
-    Vector2 pos = getBallPos();
+    Vector2 pos = this->ball.getPos();
+    Dir ballDir = this->ball.getDir();
+
 
     if (pos.y >= paddle.y && pos.y <= (paddle.y + paddle.height)){
         // y collision
         
-        if (ball.dir_right){
+        if (ballDir.right){
             if (pos.x >= paddle.x && pos.x <= (paddle.x + paddle.width)){
                 return true;    // x collision (going right)
             }

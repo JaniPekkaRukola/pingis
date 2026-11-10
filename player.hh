@@ -1,5 +1,4 @@
-#ifndef PLAYER_HH
-#define PLAYER_HH
+#pragma once
 
 // #include <iostream>
 #include "struct.hh"
@@ -24,8 +23,7 @@ class Player{
         int getPosY();
         bool setId(int id);
         Hitbox getHitbox();
-        Vector2 getBallPos();
+        bool update();
+        bool draw();
 
 };
-
-#endif

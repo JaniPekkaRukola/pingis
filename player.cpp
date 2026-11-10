@@ -19,6 +19,14 @@ bool Player::setId(int id){
     this->id = id;
 }
 
+bool Player::update(){
+    // TODO:
+}
+
+bool Player::draw(){
+    // TODO:
+}
+
 // TODO: out of bounds check for these
 void Player::setPosX(int x) { this->hitbox.x = x; }
 void Player::setPosY(int y) { this->hitbox.y = y; }

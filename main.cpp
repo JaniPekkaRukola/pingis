@@ -6,10 +6,12 @@ Pingis
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <assert.h>
+// #include "Adafruit_GFX.h" //https://github.com/adafruit/Adafruit-GFX-Library/blob/master/src/Adafruit_GFX.cpp
+// #include <Adafruit_SSD1306.h>
 
-#include "player.hpp"
+#include "game.hh"
+// #include "player.hpp"
 
-#define DEBUG false
 
 // pins
 // const int BUTTON_PIN = ;
