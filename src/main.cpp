@@ -101,7 +101,7 @@ int getDistance(int sensor){
         delay(delayAmount);
     }
 
-    Long filteredTotal = totalADC - highest - lowest;
+    long filteredTotal = totalADC - highest - lowest;
     float averageADC = filteredTotal / 3.0; 
     float distance_cm = (averageADC / ADC_STEPS) * 520.0;
 

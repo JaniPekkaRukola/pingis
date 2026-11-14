@@ -15,7 +15,7 @@ class Game{
         int gameID;
 
 
-    private:
+    public:
         Game();
         ~Game();
 
