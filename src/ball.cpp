@@ -1,4 +1,9 @@
 #include "ball.hh"
+#include "struct.hh"
+
+// this might fix display obj include issues
+// #include <Adafruit_SSD1306.h>
+// extern Adafruit_SSD1306 display; 
 
 Ball::Ball(){
     this->hitbox.x = 0;
@@ -28,23 +33,30 @@ bool Ball::update(){
         return;
     }
 
+    // TODO: out of bounds check (using "SCREEN_WIDTH" and "SCREEN_HEIGHT")
+    // NOTE: prolly wanna do future projection calculations for oob check instead of reverting later
+
     // x-axis
     if (this->dir.right){
-        this->hitbox.x += this->velocity.x;
+        this->pos.x += this->velocity.x;
     }
     else{
-        this->hitbox.x -= this->velocity.x;
+        this->pos.x -= this->velocity.x;
     }
 
     // y-axis
     if (this->dir.up){
-        this->hitbox.y += this->velocity.y;
+        this->pos.y += this->velocity.y;
     }
     else{
-        this->hitbox.y -= this->velocity.y;
+        this->pos.y -= this->velocity.y;
     }
+
+    // update hitbox
+    this->hitbox.x = this->pos.x;
+    this->hitbox.y = this->pos.y;
 }
 
 bool Ball::draw(){
-    // TODO:
+    drawRectHB(this->hitbox, WHITE);
 }

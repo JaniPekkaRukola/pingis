@@ -28,6 +28,12 @@ bool Game::update(){
 
     // update ball
     this->ball.update();
+
+    // TODO: collision stuff
+    // logic: if collision: 
+    //          - change ball dir
+    //          - calculate new new ball velocity (x and y) based on friction, paddle & ball velocity, ball angle?
+    // else: score++, ball reset
 }
 
 bool Game::draw(){

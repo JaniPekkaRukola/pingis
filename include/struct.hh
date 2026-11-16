@@ -1,21 +1,25 @@
 #pragma once
 
-#define DEBUG false
+#define DEBUG true
+#define WHITE SSD1306_WHITE
 
-typedef struct Dir {
+struct Dir { // TODO: move this back to "ball.hh" cause not needed elsewhere?
     bool right = false;
     bool up = false;
     bool stationary = true;
 };
 
-typedef struct Vector2 {
+struct Vector2 {
     float x;
     float y;
 };
 
-typedef struct Hitbox {
+struct Hitbox {
     float x;
     float y;
     float width;
     float height;
 };
+
+// drawrect macro
+#define drawRectHB(hitbox, c) display.drawRect((hitbox).x, (hitbox).y, (hitbox).width, (hitbox).height, (c))
