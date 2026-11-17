@@ -21,10 +21,10 @@
 
 // Pins
 // -------------------------------------------------
-const int BUTTON_1_PIN = 2;
-const int BUTTON_2_PIN = 3;
-const int SENSOR_P1_PIN = A0;
-const int SENSOR_P2_PIN = A1;
+const int BUTTON_1_PIN = 2;     // PD2
+const int BUTTON_2_PIN = 3;     // PD3
+const int SENSOR_P1_PIN = A0;   // PC0
+const int SENSOR_P2_PIN = A1;   // PC1
 
 
 

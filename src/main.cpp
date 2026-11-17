@@ -35,6 +35,8 @@ void setup(){
     pinMode(BUTTON_1_PIN, INPUT_PULLUP);
     pinMode(BUTTON_2_PIN, INPUT_PULLUP);
 
+    // DDRD = 0b00001100;
+    // DDRC = 0b00000011;
 
     // attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, FALLING);
 
@@ -125,6 +127,14 @@ int getDistance(int sensor){    // TODO: move this to a header file
 
     for (int i = 0; i < NUM_READINGS; i++) {
         int rawADC = analogRead(sensor);
+        
+        // uint8_t luku, mask, res;
+        // if (sensor == A0) mask = 0b00000001;
+        // else if (sensor == A1) mask = 0b00000010;
+        // else assert(0);
+
+        // luku = PINC;
+        // int rawADC = luku & mask;
         
         if (rawADC > highest) highest = rawADC;
         if (rawADC < lowest) lowest = rawADC;
