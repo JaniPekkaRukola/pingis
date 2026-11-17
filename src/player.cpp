@@ -4,7 +4,7 @@
 extern Adafruit_SSD1306 display;
 
 int getDistance(int sensor);
-extern int SENSOR_P1_PIN;
+// extern int SENSOR_P1_PIN;
 // extern int SCREEN_HEIGHT;
 
 // Player::Player() : score(0), posX(0), posY(0){};
@@ -38,7 +38,8 @@ bool Player::update(){
     // append history vector
     // update hitbox
 
-    int dist = getDistance(SENSOR_P1_PIN);
+    // int dist = getDistance(SENSOR_P1_PIN);
+    int dist = getDistance(A0);
     if (DEBUG) Serial.println("DISTANCE (" + String(this->name) + ")= " + String(dist) + " cm");
     dist = SCREEN_HEIGHT - dist;
 
@@ -81,6 +82,17 @@ void Player::setPosY(int y){
     // TODO: out of bounds check
     this->pos.y = y;
     this->hitbox.y = this->pos.y;
+}
+
+bool Player::setWidth(int w){
+    if (w <= 0) return false;
+    this->hitbox.width = w;
+    return true;
+}
+bool Player::setHeight(int h){
+    if (h <= 0) return false;
+    this->hitbox.height = h;
+    return true;
 }
 
 int Player::getPosX() { return this->pos.x; }

@@ -11,23 +11,25 @@ Pingis
 #include <Wire.h> //i2c
 // #include <avr/wdt.h> // watchdog TODO: implement this
 
-#include "struct.hh"
-
-// display
-#define SCREEN_ADDRESS 0x3C // display
-#define SSD1306_NO_SPLASH
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
-
-
-
-
-
 // Pins
 // -------------------------------------------------
 const int BUTTON_1_PIN = 2;     // PD2
 const int BUTTON_2_PIN = 3;     // PD3
 const int SENSOR_P1_PIN = A0;   // PC0
 const int SENSOR_P2_PIN = A1;   // PC1
+
+
+#include "struct.hh"
+
+// display
+#define SCREEN_ADDRESS 0x3C // display
+// #define SSD1306_NO_SPLASH true
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+
+
+
+
 
 // variables
 // -------------------------------------------------
@@ -71,6 +73,7 @@ int getDistance(int sensor);
 #include "game.hh"
 // #include "player.hh"
 
+Game game;
 
 
 void setup(){
@@ -93,10 +96,13 @@ void setup(){
 
 
     // display (from "ssd1306_128x64_i2c" example)
-    if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) { //   SSD1306_EXTERNALVCC
         Serial.println(F("[ERROR @setup()]: SSD1306 allocation failed"));
         assert(0);  // or for(;;);
     }
+
+    display.setCursor((SCREEN_WIDTH / 2) - 20, SCREEN_HEIGHT / 2);
+    display.print("INITTING");
 
     display.display();
     delay(2000); // TODO: Test is necessary
@@ -105,6 +111,14 @@ void setup(){
 
     // TODO: display startup logo
 
+
+    game.gameActive = true;
+    GUI = guiGame;
+    // GUI = guiMenu;
+    // GUI = guiStats;
+
+    display.setTextSize(1);      // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE);
 }
 
 void loop(){
@@ -114,7 +128,7 @@ void loop(){
 	delta_t = current_time - prev_time;
 	prev_time = current_time; 
     int fps = (delta_t > 0) ? (1000.0 / delta_t) : 0;
-    if (DEBUG) Serial.println("Delta_t = " + String(delta_t) + " ms\t fps = " + String(fps));
+    // if (DEBUG) Serial.println("Delta_t = " + String(delta_t) + " ms\t fps = " + String(fps));
     // hopefully delta_t is more than 30
 
     display.clearDisplay(); // clear display buffer
@@ -128,6 +142,13 @@ void loop(){
 
         } break;
         case (guiGame):{
+            game.update();
+            game.draw();
+
+            drawTest(fps);
+
+            // display.display();
+            
 
         } break;
         case (guiStats):{
@@ -137,7 +158,23 @@ void loop(){
         default: { assert(0); }
     }
 
+    if (0){
 
+        int dist = getDistance(A0);
+        Serial.println("dist = " + String(dist) + " cm");
+
+        display.setTextSize(1);      // Normal 1:1 pixel scale
+        display.setTextColor(SSD1306_WHITE);
+
+        display.setCursor(0,0);
+        display.print("dist = " + String(dist) + " cm");
+        display.display();
+        
+        
+    }
+    
+    // draw
+    // display.display();
 
     // delay(500);
 }
@@ -158,7 +195,7 @@ void drawTest(int fps){
 
     display.display();
 
-    if(DEBUG) Serial.println(F("drawtest..."));
+    // if(DEBUG) Serial.println(F("drawtest..."));
 }
 
 /*
@@ -192,7 +229,7 @@ int getDistance(int sensor){    // TODO: move this to a header file
         if (rawADC < lowest) lowest = rawADC;
         
         totalADC += rawADC;
-        delay(delayAmount);
+        // delay(delayAmount);
     }
 
     long filteredTotal = totalADC - highest - lowest;

@@ -11,14 +11,14 @@ class Game{
         Player p2;
         Ball ball;
         int score;
-        bool gameActive;
         int gameID;
-
-
-    public:
+        
+        
+        public:
         Game();
         ~Game();
-
+        
+        bool gameActive;
         bool setScore(int s);
         int getScore();
         bool update();

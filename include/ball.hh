@@ -20,6 +20,7 @@ class Ball{
         bool update();
         bool draw();
         Dir getDir();
+        bool setSize(int s);
 
         // TODO: fun methods like "increaseVelocity" or "decreaseSize" or make the ball's color black for a second (invisible)
 };

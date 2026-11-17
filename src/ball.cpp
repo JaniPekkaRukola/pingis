@@ -8,6 +8,9 @@ extern Adafruit_SSD1306 display;
 Ball::Ball(){
     this->hitbox.x = 0;
     this->hitbox.y = 0;
+    this->hitbox.width = 1;
+    this->hitbox.height = 1;
+
     this->velocity.x = 0;
     this->velocity.y = 0;
     this->friction = 0.1f;
@@ -15,9 +18,17 @@ Ball::Ball(){
     this->dir.right = false;
     this->dir.up = false;
     this->dir.stationary = true;
+
 }
 
 Ball::~Ball(){}
+
+bool Ball::setSize(int s){
+    if (s <= 0) return false;
+    this->hitbox.width = s;
+    this->hitbox.height = s;
+    return true;
+}
 
 Vector2 Ball::getPos(){
     return (Vector2){this->hitbox.x, this->hitbox.y};
@@ -30,7 +41,7 @@ Dir Ball::getDir(){
 bool Ball::update(){
     if (this->dir.stationary){
         // if (DEBUG) Serial.println("[DEBUG - @Ball::update()] ball stationary, returning");
-        return;
+        return false;
     }
 
     // TODO: out of bounds check (using "SCREEN_WIDTH" and "SCREEN_HEIGHT")
@@ -55,8 +66,10 @@ bool Ball::update(){
     // update hitbox
     this->hitbox.x = this->pos.x;
     this->hitbox.y = this->pos.y;
+    return true;
 }
 
 bool Ball::draw(){
     drawRectHB(display, this->hitbox, WHITE);
+    return true;
 }

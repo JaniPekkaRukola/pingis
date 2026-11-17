@@ -24,11 +24,14 @@ class Player{
         int getPosY();
         bool setId(int id);
         Hitbox getHitbox();
+        bool setWidth(int w);
+        bool setHeight(int h);
+        void calculateVelocity();
         bool update();
         bool draw();
-
+        
+        int sensor;
         char* name;
-        void calculateVelocity();
         
         // TODO: fun methods like "decreaseHeight() -> makes paddle shorter" -> make these easier by doing stuff like "setPaddleSize" or "setPaddleWidth"
 };
