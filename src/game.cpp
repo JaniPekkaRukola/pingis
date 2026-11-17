@@ -6,12 +6,12 @@ Game::Game(){
     this->gameID = 0;
 
     // these needed?
-    this->p1 = Player();
-    this->p2 = Player();
-    this->ball = Ball();
+    // this->p1 = Player();
+    // this->p2 = Player();
+    // this->ball = Ball();
 
-    this->p1.name = "p1";
-    this->p2.name = "p2";
+    // this->p1.name = "p1";
+    // this->p2.name = "p2";
 }
 
 Game::~Game(){}
@@ -39,6 +39,7 @@ bool Game::update(){
     //          - change ball dir
     //          - calculate new new ball velocity (x and y) based on friction, paddle & ball velocity, ball angle?
     // else: score++, ball reset
+    return true;
 }
 
 bool Game::draw(){
@@ -48,6 +49,7 @@ bool Game::draw(){
 
     // draw ball
     ball.draw();
+    return true;
 }
 
 bool Game::checkCollision(Player p){

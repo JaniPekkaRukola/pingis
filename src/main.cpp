@@ -4,17 +4,62 @@ Pingis
 11.2026 (init 3.11.2026)
 */
 #include <Arduino.h>
-#include <EEPROM.h>
+// #include <EEPROM.h>
 #include <assert.h>
 #include "Adafruit_GFX.h" //https://github.com/adafruit/Adafruit-GFX-Library/blob/master/src/Adafruit_GFX.cpp
 #include <Adafruit_SSD1306.h>
 #include <Wire.h> //i2c
-#include <avr/wdt.h> // watchdog TODO: implement this
+// #include <avr/wdt.h> // watchdog TODO: implement this
 
 #include "struct.hh"
 
 // display
+#define SCREEN_ADDRESS 0x3C // display
+#define SSD1306_NO_SPLASH
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+
+
+
+
+// Pins
+// -------------------------------------------------
+const int BUTTON_1_PIN = 2;     // PD2
+const int BUTTON_2_PIN = 3;     // PD3
+const int SENSOR_P1_PIN = A0;   // PC0
+const int SENSOR_P2_PIN = A1;   // PC1
+
+// variables
+// -------------------------------------------------
+
+// ADC
+const float V_REF = 5.0;        // Analog reference voltage ( 5V )
+const float R_BITS = 10.0;      // ADC resolution (bits)
+const float ADC_STEPS = (1 << int(R_BITS)) - 1; // Number of steps (2^R_BITS - 1)
+
+// Filter VARS
+const int NUM_READINGS = 5;
+
+// button vars
+bool wasButtonPressed = false;
+unsigned int buttonPressCount = 0;
+unsigned long debounceDelay = 150;
+
+// delta t
+unsigned long prev_time = 0;
+unsigned long delta_t = 0;
+
+enum guiState {
+    guiNil,     // not used
+    guiMenu,    // mainmenu
+    guiGame,    // game
+    guiStats    // stats from eeprom
+};
+guiState GUI = guiMenu;
+
+
+
+
 
 
 // forward decls
@@ -78,6 +123,9 @@ void loop(){
         case (guiMenu):{
             drawTest(fps);
 
+            // display.drawRect(10, 10, 50, 50, WHITE);
+            // display.display();
+
         } break;
         case (guiGame):{
 
@@ -91,18 +139,22 @@ void loop(){
 
 
 
-    delay(500);
+    // delay(500);
 }
 
 void drawTest(int fps){
     display.setTextSize(1);      // Normal 1:1 pixel scale
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(0, 0);
-    display.println(F("DrawTest"));
-    display.setCursor(2, 0);
-    display.println("Delta_t = " + String(delta_t) + " ms");
-    display.setCursor(2, 0);
-    display.println("fps = " + String(fps));
+    display.print(F("DrawTest"));
+
+
+    display.setCursor(0, 20);
+    display.print("Delta_t = " + String(delta_t) + " ms");
+
+
+    display.setCursor(0, 40);
+    display.print("fps = " + String(fps));
 
     display.display();
 
@@ -127,7 +179,7 @@ int getDistance(int sensor){    // TODO: move this to a header file
 
     for (int i = 0; i < NUM_READINGS; i++) {
         int rawADC = analogRead(sensor);
-        
+
         // uint8_t luku, mask, res;
         // if (sensor == A0) mask = 0b00000001;
         // else if (sensor == A1) mask = 0b00000010;
