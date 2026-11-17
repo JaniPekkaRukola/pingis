@@ -14,6 +14,8 @@ class Ball{
 
     public:
 
+        Ball();
+        ~Ball();
         Vector2 getPos();
         bool update();
         bool draw();

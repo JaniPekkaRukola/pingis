@@ -22,4 +22,4 @@ struct Hitbox {
 };
 
 // drawrect macro
-#define drawRectHB(hitbox, c) display.drawRect((hitbox).x, (hitbox).y, (hitbox).width, (hitbox).height, (c))
+#define drawRectHB(display, hitbox, c) display.drawRect((hitbox).x, (hitbox).y, (hitbox).width, (hitbox).height, (c))

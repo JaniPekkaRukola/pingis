@@ -2,8 +2,8 @@
 #include "struct.hh"
 
 // this might fix display obj include issues
-// #include <Adafruit_SSD1306.h>
-// extern Adafruit_SSD1306 display; 
+#include <Adafruit_SSD1306.h>
+extern Adafruit_SSD1306 display; 
 
 Ball::Ball(){
     this->hitbox.x = 0;
@@ -58,5 +58,5 @@ bool Ball::update(){
 }
 
 bool Ball::draw(){
-    drawRectHB(this->hitbox, WHITE);
+    drawRectHB(display, this->hitbox, WHITE);
 }

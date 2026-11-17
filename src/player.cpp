@@ -1,5 +1,8 @@
 #include "player.hh"
 
+#include <Adafruit_SSD1306.h>
+extern Adafruit_SSD1306 display; 
+
 // Player::Player() : score(0), posX(0), posY(0){};
 Player::Player(){
     this->score = 0;
@@ -30,8 +33,7 @@ bool Player::update(){
     // update hitbox
 
 
-    // TODO: append distance values to "locationHistory" vector
-    // TODO: maintain vector so it wont grow too big
+    // TODO: append distance values to "locationHistory" array
 
 
     // update hitbox
@@ -40,7 +42,7 @@ bool Player::update(){
 }
 
 bool Player::draw(){
-    drawRectHB(this->hitbox, WHITE);
+    drawRectHB(display, this->hitbox, WHITE);
 }
 
 void Player::setPosX(int x) {
@@ -60,6 +62,6 @@ int Player::getPosY() { return this->pos.y; }
 Hitbox Player::getHitbox() { return this->hitbox; }
 
 void Player::calculateVelocity(){
-    // TODO: calculate palyers velocity with "velocitySampleCount" and "locationHistory" vector
+    // TODO: calculate palyers velocity with "velocitySampleCount" and "locationHistory" array
     // and update this->velocity.x and y
 }

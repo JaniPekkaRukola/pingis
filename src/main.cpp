@@ -97,7 +97,7 @@ void loop(){
 
     switch(GUI){
         case (guiMenu):{
-            drawTest();
+            drawTest(fps);
 
         } break;
         case (guiGame):{
@@ -115,7 +115,7 @@ void loop(){
     delay(500);
 }
 
-void drawTest(){
+void drawTest(int fps){
     display.setTextSize(1);      // Normal 1:1 pixel scale
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(0, 0);
