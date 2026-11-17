@@ -1,7 +1,11 @@
 #include "player.hh"
 
 #include <Adafruit_SSD1306.h>
-extern Adafruit_SSD1306 display; 
+extern Adafruit_SSD1306 display;
+
+int getDistance(int sensor);
+extern int SENSOR_P1_PIN;
+// extern int SCREEN_HEIGHT;
 
 // Player::Player() : score(0), posX(0), posY(0){};
 Player::Player(){
@@ -20,6 +24,7 @@ Player::~Player(){}
 bool Player::setId(int id){
     // TODO: do unique id system (uuid)
     this->id = id;
+    return true;
 }
 
 bool Player::update(){
@@ -27,22 +32,43 @@ bool Player::update(){
 
     // logic:
     // get sensor distance
+    // invert sensor distance (SCREEN_HEIGHT - sensor_dist)
     // out of bounds check (using "SCREEN_HEIGHT")
     // set position
     // append history vector
     // update hitbox
 
+    int dist = getDistance(SENSOR_P1_PIN);
+    if (DEBUG) Serial.println("DISTANCE (" + String(this->name) + ")= " + String(dist) + " cm");
+    dist = SCREEN_HEIGHT - dist;
 
-    // TODO: append distance values to "locationHistory" array
+    // out of bound top
+    if (dist < 0) dist = 0;
+    
+    // out of bound bottom
+    if (dist + this->hitbox.height > SCREEN_HEIGHT){
+        dist = SCREEN_HEIGHT - this->hitbox.height;
+    }
 
+    this->pos.y = dist;
+
+    // TODO: make this better
+    // appendArr(&this->locationHistory, dist);
+
+    locationHistory[3] = locationHistory[2];
+    locationHistory[2] = locationHistory[1];
+    locationHistory[1] = dist;
 
     // update hitbox
     this->hitbox.x = this->pos.x;
     this->hitbox.y = this->pos.y;
+
+    return true;
 }
 
 bool Player::draw(){
     drawRectHB(display, this->hitbox, WHITE);
+    return true;
 }
 
 void Player::setPosX(int x) {

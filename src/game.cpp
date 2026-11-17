@@ -4,9 +4,14 @@ Game::Game(){
     this->score = 0;
     this->gameActive = false;
     this->gameID = 0;
+
+    // these needed?
     this->p1 = Player();
     this->p2 = Player();
     this->ball = Ball();
+
+    this->p1.name = "p1";
+    this->p2.name = "p2";
 }
 
 Game::~Game(){}
@@ -70,3 +75,4 @@ bool Game::checkCollision(Player p){
     // no collision
     return false;
 }
+

@@ -2,7 +2,6 @@
 
 // #include <iostream>
 #include "struct.hh"
-// #include <vector> // TODO: investigate if this could be replaced with velocitySampleCount sized vector instead of a whole lib
 
 class Player{
 
@@ -11,7 +10,6 @@ class Player{
         int score;  // move this to game obj?
         Vector2 pos;
         Hitbox hitbox;
-        // std::vector<float> locationHistory; // players previous locations
         Vector2 velocity;
         static const int velocitySampleCount = 3; // how many prev positions are used for velocity calculations
         float locationHistory[velocitySampleCount] = {0.0f};
@@ -29,7 +27,7 @@ class Player{
         bool update();
         bool draw();
 
-        
+        char* name;
         void calculateVelocity();
         
         // TODO: fun methods like "decreaseHeight() -> makes paddle shorter" -> make these easier by doing stuff like "setPaddleSize" or "setPaddleWidth"

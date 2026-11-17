@@ -6,47 +6,22 @@ Pingis
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <assert.h>
-// #include "Adafruit_GFX.h" //https://github.com/adafruit/Adafruit-GFX-Library/blob/master/src/Adafruit_GFX.cpp
-// #include <Adafruit_SSD1306.h>
-// #include <Wire.h> //i2c
+#include "Adafruit_GFX.h" //https://github.com/adafruit/Adafruit-GFX-Library/blob/master/src/Adafruit_GFX.cpp
+#include <Adafruit_SSD1306.h>
+#include <Wire.h> //i2c
+#include <avr/wdt.h> // watchdog TODO: implement this
+
+#include "struct.hh"
 
 // display
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define SCREEN_ADDRESS 0x3D
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-// pins
-// const int BUTTON_PIN = ;
-const int ADC_PIN = A0;
-const int SENSOR = A1;
 
-// ADC
-const float V_REF = 5.0;        // Analog reference voltage ( 5V )
-const float R_BITS = 10.0;      // ADC resolution (bits)
-const float ADC_STEPS = (1 << int(R_BITS)) - 1; // Number of steps (2^R_BITS - 1)
+// forward decls
+void drawTest(int fps);
+int getDistance(int sensor);
 
-// Filter VARS
-const int NUM_READINGS = 5;
 
-// button vars
-bool wasButtonPressed = false;
-unsigned int buttonPressCount = 0;
-unsigned long debounceDelay = 150;
-
-// delta t
-unsigned long prev_time = 0;
-unsigned long delta_t = 0;
-
-enum guiState {
-    guiNil,     // not used
-    guiMenu,    // mainmenu
-    guiGame,    // game
-    guiStats    // stats from eeprom
-};
-guiState GUI = guiMenu;
-
-// enum gameMode{} ? like: normal, increasing speed, gravity? (ball gravitates lower), ball is invisible sometimes etc
 
 #include "game.hh"
 // #include "player.hh"
@@ -56,7 +31,9 @@ guiState GUI = guiMenu;
 void setup(){
     Serial.begin(9600); // TODO: raise this?
 
-    // pinMode(BUTTON_PIN, INPUT_PULLUP);
+    // TODO: change these to register
+    pinMode(BUTTON_1_PIN, INPUT_PULLUP);
+    pinMode(BUTTON_2_PIN, INPUT_PULLUP);
 
 
     // attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, FALLING);
@@ -140,7 +117,6 @@ void buttonPressed(){
   }
 }*/
 
-
 int getDistance(int sensor){    // TODO: move this to a header file
     int highest = -1;
     int lowest = 2000;
@@ -163,6 +139,7 @@ int getDistance(int sensor){    // TODO: move this to a header file
 
     return distance_cm;
 }
+
 
 int getId(){   // TODO: move this to a header file
     return random();
