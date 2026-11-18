@@ -11,19 +11,27 @@ Pingis
 #include <Wire.h> //i2c
 // #include <avr/wdt.h> // watchdog TODO: implement this
 
+
+// settings
+// -------------------------------------------------
+bool printFps = false;
+bool printSensor = false;
+
+
+
 // Pins
 // -------------------------------------------------
 const int BUTTON_1_PIN = 2;     // PD2
 const int BUTTON_2_PIN = 3;     // PD3
-const int SENSOR_P1_PIN = A0;   // PC0
-const int SENSOR_P2_PIN = A1;   // PC1
+const uint8_t SENSOR_P1_PIN = A0;   // PC0
+const uint8_t SENSOR_P2_PIN = A1;   // PC1
 
 
 #include "struct.hh"
 
 // display
 #define SCREEN_ADDRESS 0x3C // display
-// #define SSD1306_NO_SPLASH true
+#define SSD1306_NO_SPLASH true
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 
@@ -66,7 +74,7 @@ guiState GUI = guiMenu;
 
 // forward decls
 void drawTest(int fps);
-int getDistance(int sensor);
+int getDistance(uint8_t sensor);
 
 
 
@@ -101,24 +109,26 @@ void setup(){
         assert(0);  // or for(;;);
     }
 
+    display.setTextSize(1);      // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE);
     display.setCursor((SCREEN_WIDTH / 2) - 20, SCREEN_HEIGHT / 2);
-    display.print("INITTING");
+    display.print("STARTING");
 
     display.display();
-    delay(2000); // TODO: Test is necessary
 
     display.clearDisplay(); // clear display buffer
 
     // TODO: display startup logo
 
 
-    game.gameActive = true;
     GUI = guiGame;
     // GUI = guiMenu;
     // GUI = guiStats;
 
     display.setTextSize(1);      // Normal 1:1 pixel scale
     display.setTextColor(SSD1306_WHITE);
+
+    game.startGame();
 }
 
 void loop(){
@@ -128,8 +138,7 @@ void loop(){
 	delta_t = current_time - prev_time;
 	prev_time = current_time; 
     int fps = (delta_t > 0) ? (1000.0 / delta_t) : 0;
-    // if (DEBUG) Serial.println("Delta_t = " + String(delta_t) + " ms\t fps = " + String(fps));
-    // hopefully delta_t is more than 30
+    if (printFps) Serial.println("Delta_t = " + String(delta_t) + " ms\t fps = " + String(fps));
 
     display.clearDisplay(); // clear display buffer
 
@@ -145,9 +154,9 @@ void loop(){
             game.update();
             game.draw();
 
-            drawTest(fps);
+            // drawTest(fps);
 
-            // display.display();
+            display.display();
             
 
         } break;
@@ -158,20 +167,20 @@ void loop(){
         default: { assert(0); }
     }
 
-    if (0){
+    // if (0){
 
-        int dist = getDistance(A0);
-        Serial.println("dist = " + String(dist) + " cm");
+    //     int dist = getDistance(A0);
+    //     Serial.println("dist = " + String(dist) + " cm");
 
-        display.setTextSize(1);      // Normal 1:1 pixel scale
-        display.setTextColor(SSD1306_WHITE);
+    //     display.setTextSize(1);      // Normal 1:1 pixel scale
+    //     display.setTextColor(SSD1306_WHITE);
 
-        display.setCursor(0,0);
-        display.print("dist = " + String(dist) + " cm");
-        display.display();
+    //     display.setCursor(0,0);
+    //     display.print("dist = " + String(dist) + " cm");
+    //     display.display();
         
         
-    }
+    // }
     
     // draw
     // display.display();
@@ -208,15 +217,17 @@ void buttonPressed(){
   }
 }*/
 
-int getDistance(int sensor){    // TODO: move this to a header file
+int getDistance(uint8_t sensor){    // TODO: move this to a header file
+
     int highest = -1;
     int lowest = 2000;
     long totalADC = 0;
-    int delayAmount = 20; // study this
 
     for (int i = 0; i < NUM_READINGS; i++) {
         int rawADC = analogRead(sensor);
 
+        // TODO: replace analogRead with registers:
+        // NOTE: below not working
         // uint8_t luku, mask, res;
         // if (sensor == A0) mask = 0b00000001;
         // else if (sensor == A1) mask = 0b00000010;
@@ -229,12 +240,19 @@ int getDistance(int sensor){    // TODO: move this to a header file
         if (rawADC < lowest) lowest = rawADC;
         
         totalADC += rawADC;
-        // delay(delayAmount);
     }
 
     long filteredTotal = totalADC - highest - lowest;
     float averageADC = filteredTotal / 3.0; 
     float distance_cm = (averageADC / ADC_STEPS) * 520.0;
+
+    distance_cm = (int) distance_cm;
+
+    if (printSensor) {
+        Serial.print("sensor(");
+        Serial.print(sensor);
+        Serial.println(") = " + String(distance_cm) + " cm");
+    }
 
     return distance_cm;
 }

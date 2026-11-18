@@ -24,5 +24,6 @@ class Game{
         bool update();
         bool draw();
         bool checkCollision(Player p);
+        bool startGame();
 
 };

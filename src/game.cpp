@@ -1,4 +1,5 @@
 #include "game.hh"
+#include <Arduino.h>
 
 Game::Game(){
     this->score = 0;
@@ -17,16 +18,31 @@ Game::Game(){
     this->p1.setWidth(2);
     this->p1.setHeight(10);
     this->p1.sensor = A0;
+    this->p1.setId(1); // TODO uuid
 
     this->p2.setPosX(SCREEN_WIDTH - 1);
     this->p2.setWidth(2);
     this->p2.setHeight(10);
-    this->p1.sensor = A1;
+    this->p2.sensor = A1;
+    this->p2.setId(2); // TODO uuid
 
-    this->ball.setSize(1);
+
+    this->ball.setSize(2, 2);
+    this->ball.setPos((SCREEN_WIDTH / 2) - (this->ball.getSize().x / 2), (SCREEN_HEIGHT / 2) - (this->ball.getSize().y / 2));
 }
 
 Game::~Game(){}
+
+bool Game::startGame(){
+    // TODO: randomize starting dir, or let the loser start when not first round?
+    this->ball.setDir(true, false, false);
+    this->ball.setVelocity({1.0, 0.0});
+
+
+    this->gameActive = true;
+
+    if (DEBUG) Serial.println("Game starting");
+}
 
 bool Game::setScore(int s){
     if (s < 0) return false;

@@ -3,7 +3,7 @@
 #include <Adafruit_SSD1306.h>
 extern Adafruit_SSD1306 display;
 
-int getDistance(int sensor);
+int getDistance(uint8_t sensor);
 // extern int SENSOR_P1_PIN;
 // extern int SCREEN_HEIGHT;
 
@@ -28,19 +28,14 @@ bool Player::setId(int id){
 }
 
 bool Player::update(){
-    // TODO: 
 
-    // logic:
-    // get sensor distance
-    // invert sensor distance (SCREEN_HEIGHT - sensor_dist)
-    // out of bounds check (using "SCREEN_HEIGHT")
-    // set position
-    // append history vector
-    // update hitbox
+    // get distance
+    int dist = getDistance(this->sensor);
 
-    // int dist = getDistance(SENSOR_P1_PIN);
-    int dist = getDistance(A0);
-    if (DEBUG) Serial.println("DISTANCE (" + String(this->name) + ")= " + String(dist) + " cm");
+    //TODO: smooth out the distance
+    //eg: if new distance is > accepted variation from previous -> discard
+
+    // invert distance (since [0,0] is topleft)
     dist = SCREEN_HEIGHT - dist;
 
     // out of bound top
@@ -51,14 +46,14 @@ bool Player::update(){
         dist = SCREEN_HEIGHT - this->hitbox.height;
     }
 
+    // set position
     this->pos.y = dist;
 
-    // TODO: make this better
+    // append locationhistory TODO: make this better
     // appendArr(&this->locationHistory, dist);
-
-    locationHistory[3] = locationHistory[2];
     locationHistory[2] = locationHistory[1];
-    locationHistory[1] = dist;
+    locationHistory[1] = locationHistory[0];
+    locationHistory[0] = dist;
 
     // update hitbox
     this->hitbox.x = this->pos.x;

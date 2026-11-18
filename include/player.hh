@@ -30,7 +30,7 @@ class Player{
         bool update();
         bool draw();
         
-        int sensor;
+        uint8_t sensor;
         char* name;
         
         // TODO: fun methods like "decreaseHeight() -> makes paddle shorter" -> make these easier by doing stuff like "setPaddleSize" or "setPaddleWidth"

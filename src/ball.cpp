@@ -23,20 +23,23 @@ Ball::Ball(){
 
 Ball::~Ball(){}
 
-bool Ball::setSize(int s){
-    if (s <= 0) return false;
-    this->hitbox.width = s;
-    this->hitbox.height = s;
-    return true;
-}
 
-Vector2 Ball::getPos(){
-    return (Vector2){this->hitbox.x, this->hitbox.y};
+bool Ball::setDir(bool right, bool up, bool stationary){ // this could be void since dir dont have validation
+    this->dir.right = right;
+    this->dir.up = up;
+    this->dir.stationary = stationary;
+    return true;
 }
 
 Dir Ball::getDir(){
     return this->dir;
 }
+
+bool Ball::draw(){
+    drawRectHB(display, this->hitbox, WHITE);
+    return true;
+}
+
 
 bool Ball::update(){
     if (this->dir.stationary){
@@ -64,12 +67,52 @@ bool Ball::update(){
     }
 
     // update hitbox
-    this->hitbox.x = this->pos.x;
-    this->hitbox.y = this->pos.y;
+    this->updateHitbox();
     return true;
 }
 
-bool Ball::draw(){
-    drawRectHB(display, this->hitbox, WHITE);
+void Ball::updateHitbox(){
+    this->hitbox.x = this->pos.x;
+    this->hitbox.y = this->pos.y;
+}
+
+
+bool Ball::setSize(int w, int h){
+    if (w <= 0 || h <= 0) return false;
+    if (w != h){ Serial.println("[WARNING]: ball size is not uniform"); }
+    this->hitbox.width = w;
+    this->hitbox.height = h;
     return true;
+}
+
+Vector2 Ball::getSize(){
+    return (Vector2){this->hitbox.width, this->hitbox.height};
+}
+
+bool Ball::setPos(float x, float y){
+
+    Serial.println("Ball pos x set = " + String(x));
+    Serial.println("Ball pos y set = " + String(y));
+
+    //TODO: out of bounds check here
+    this->pos.x = x;
+    this->pos.y = y;
+
+    this->updateHitbox();
+
+    return true;
+}
+
+Vector2 Ball::getPos(){
+    return (Vector2){this->pos.x, this->pos.y};
+}
+
+bool Ball::setVelocity(Vector2 v){
+    if (v.x < 0 || v.y < 0) return false;
+    this->velocity = v;
+    return true;
+}
+
+Vector2 Ball::getVelocity(){
+    return this->velocity;
 }
