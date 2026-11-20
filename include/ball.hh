@@ -21,13 +21,16 @@ class Ball{
         bool update();
         bool draw();
         Dir getDir();
-        bool setDir(bool right, bool up, bool stationary);
+        void setDir(bool right, bool up, bool stationary);
+        void setDirX(bool right);
+        void toggleDirX();
         bool setSize(int w, int h);
         Vector2 getSize();
-        bool setPos(float x, float y);
+        bool setPos(int x, int y);
 
         Vector2 getVelocity();
         bool setVelocity(Vector2 v);
+        bool increaseVelocity(Vector2 v);
 
         // TODO: fun methods like "increaseVelocity" or "decreaseSize" or make the ball's color black for a second (invisible)
 };

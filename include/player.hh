@@ -7,7 +7,7 @@ class Player{
 
     private:
         int id;     // for saving data to eeprom
-        int score;  // move this to game obj?
+        // int score;  // move this to game obj?
         Vector2 pos;
         Hitbox hitbox;
         Vector2 velocity;

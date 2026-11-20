@@ -4,12 +4,8 @@
 extern Adafruit_SSD1306 display;
 
 int getDistance(uint8_t sensor);
-// extern int SENSOR_P1_PIN;
-// extern int SCREEN_HEIGHT;
 
-// Player::Player() : score(0), posX(0), posY(0){};
 Player::Player(){
-    this->score = 0;
     this->pos.x = 0;
     this->pos.y = 0;
 
@@ -49,7 +45,8 @@ bool Player::update(){
     // set position
     this->pos.y = dist;
 
-    // append locationhistory TODO: make this better
+    // TODO: make this better
+    // append locationhistory 
     // appendArr(&this->locationHistory, dist);
     locationHistory[2] = locationHistory[1];
     locationHistory[1] = locationHistory[0];

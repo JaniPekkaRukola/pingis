@@ -60,7 +60,7 @@ unsigned long debounceDelay = 150;
 unsigned long prev_time = 0;
 unsigned long delta_t = 0;
 
-enum guiState {
+enum guiState { //TODO: move this to "struct.hh"?
     guiNil,     // not used
     guiMenu,    // mainmenu
     guiGame,    // game
@@ -74,9 +74,7 @@ guiState GUI = guiMenu;
 
 
 // forward decls
-void drawTest(int fps);
 int getDistance(uint8_t sensor);
-
 
 
 #include "game.hh"
@@ -133,6 +131,10 @@ void setup(){
     game.startGame();
 }
 
+
+
+
+
 void loop(){
 
     // delta t
@@ -146,7 +148,7 @@ void loop(){
 
     switch(GUI){
         case (guiMenu):{
-            drawTest(fps);
+            // drawTest(fps);
 
             // display.drawRect(10, 10, 50, 50, WHITE);
             // display.display();
@@ -155,6 +157,7 @@ void loop(){
         case (guiGame):{
             game.update();
             game.draw();
+            game.drawUI();
 
             // drawTest(fps);
 
@@ -169,44 +172,6 @@ void loop(){
         default: { assert(0); }
     }
 
-    // if (0){
-
-    //     int dist = getDistance(A0);
-    //     Serial.println("dist = " + String(dist) + " cm");
-
-    //     display.setTextSize(1);      // Normal 1:1 pixel scale
-    //     display.setTextColor(SSD1306_WHITE);
-
-    //     display.setCursor(0,0);
-    //     display.print("dist = " + String(dist) + " cm");
-    //     display.display();
-        
-        
-    // }
-    
-    // draw
-    // display.display();
-
-    // delay(500);
-}
-
-void drawTest(int fps){
-    display.setTextSize(1);      // Normal 1:1 pixel scale
-    display.setTextColor(SSD1306_WHITE);
-    display.setCursor(0, 0);
-    display.print(F("DrawTest"));
-
-
-    display.setCursor(0, 20);
-    display.print("Delta_t = " + String(delta_t) + " ms");
-
-
-    display.setCursor(0, 40);
-    display.print("fps = " + String(fps));
-
-    display.display();
-
-    // if(DEBUG) Serial.println(F("drawtest..."));
 }
 
 /*
@@ -230,7 +195,7 @@ int getDistance(uint8_t sensor){    // TODO: move this to a header file
 
         // TODO: replace analogRead with registers:
         // NOTE: below not working
-        // uint8_t luku, mask, res;
+        // uint8_t luku, mask, res; // TODO: translate "luku" to english
         // if (sensor == A0) mask = 0b00000001;
         // else if (sensor == A1) mask = 0b00000010;
         // else assert(0);
@@ -251,7 +216,7 @@ int getDistance(uint8_t sensor){    // TODO: move this to a header file
     distance_cm = (int) distance_cm;
 
     if (printSensor) {
-        Serial.print("sensor(");
+        Serial.print(F("sensor("));
         Serial.print(sensor);
         Serial.println(") = " + String(distance_cm) + " cm");
     }
@@ -263,3 +228,27 @@ int getDistance(uint8_t sensor){    // TODO: move this to a header file
 int getId(){   // TODO: move this to a header file
     return random();
 }
+
+
+
+
+
+//TODO:
+/*
+-   switch to MEGA
+-   sensor smoothing (paddle should not jump around if sensor reads bad values)
+-   sensor max value (sensor reading should be disregarded if the value is > max accepted value) -> this prevents bad sensor readings (eg: bounceback from roof)
+-   design UI
+-   UI class?
+-   eeprom save/read
+-   score uart
+-   watchdog?
+-   timer
+-   research if displays top yellow bar can be made blue
+-   ball friction
+-   player paddle velocity calculation
+-   read sensor with registers
+-   hook up buzzer logic
+-   bugfix: ball should bounce back from the closest edge of the paddle (currently (atleast for p1) ball bounces back from the back edge when colliding)
+
+*/
