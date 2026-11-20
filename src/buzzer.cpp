@@ -19,7 +19,8 @@ namespace Buzzer {
         TCCR2A = 0;
         TCCR2B = 0;
         TCNT2 = 0;
-        PORTB &= ~(1 << PB3); // D11 -> LOW
+        PORTB &= ~(1 << PB3); // replace this with MEGA version:
+        // MEGA: PORTB &= ~(1 << PB4); // D10 -> LOW
         SREG = old_sreg;
     }
 
@@ -51,7 +52,8 @@ namespace Buzzer {
     }
 
     void initialization() {
-        DDRB |= (1 << PB3); // D11 -> OUTPUT
+        DDRB |= (1 << PB3); // replace this with MEGA version:
+        // MEGA: DDRB |= (1 << PB4) // D10 -> OUTPUT
         stopPWM();
     }
 }

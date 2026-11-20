@@ -22,10 +22,10 @@ bool printSensor = false;
 
 // Pins
 // -------------------------------------------------
-const int BUTTON_1_PIN = 2;     // PD2
-const int BUTTON_2_PIN = 3;     // PD3
-const uint8_t SENSOR_P1_PIN = A0;   // PC0
-const uint8_t SENSOR_P2_PIN = A1;   // PC1
+const int BUTTON_1_PIN = 2;     // PE4 MEGA: PE4
+const int BUTTON_2_PIN = 3;     // PD3 MEGA: PE5
+const uint8_t SENSOR_P1_PIN = A0;   // PC0 MEGA: PF0
+const uint8_t SENSOR_P2_PIN = A1;   // PC1 MEGA: PF1
 
 
 #include "struct.hh"
@@ -235,7 +235,7 @@ int getId(){   // TODO: move this to a header file
 
 //TODO:
 /*
--   switch to MEGA
+-   switch to MEGA <-- MEGA "version" is ready 20.11., uncomment every code line where is "MEGA" keyword (and remove the equivalent Nano code line)
 -   sensor smoothing (paddle should not jump around if sensor reads bad values)
 -   sensor max value (sensor reading should be disregarded if the value is > max accepted value) -> this prevents bad sensor readings (eg: bounceback from roof)
 -   design UI
