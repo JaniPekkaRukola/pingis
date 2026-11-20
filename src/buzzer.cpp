@@ -8,9 +8,9 @@ namespace Buzzer {
     constexpr uint8_t PRESCALER_BITS = (1 << CS22) | (1 << CS21);
 
     constexpr uint16_t PADDLE_FREQ = 2200;
-    constexpr uint16_t PADDLE_TIME_MS = 30;
+    constexpr uint8_t PADDLE_TIME_MS = 30;
     constexpr uint16_t SCORE_FREQ = 1500;
-    constexpr uint16_t SCORE_TIME_MS = 80;
+    constexpr uint8_t SCORE_TIME_MS = 80;
 
     void stopPWM() {
         uint8_t old_sreg = SREG;
@@ -37,7 +37,7 @@ namespace Buzzer {
         OCR2A = ocrnx;
         TCCR2A = (1 << WGM21) | (1 << COM2A0); // CTC mode ON and OC2A toggle match
         TIFR2 = (1 << OCF2A); // clear interrupt flag (if there would be old one hanging)
-        TIMSK2 |= (1 << OCIE2A); // to compare interrupt
+        TIMSK2 = (1 << OCIE2A); // to compare interrupt
         TCCR2B = PRESCALER_BITS;
         SREG = old_sreg;
     }
@@ -50,11 +50,6 @@ namespace Buzzer {
         }
     }
 
-    void onToggle() {
-        if (toggles_left > 0) toggles_left--;
-        if (toggles_left == 0) stopPWM();
-    }
-
     void initialization() {
         DDRB |= (1 << PB3); // D11 -> OUTPUT
         stopPWM();
@@ -62,5 +57,9 @@ namespace Buzzer {
 }
 
 ISR(TIMER2_COMPA_vect) {
-    Buzzer::onToggle();
+    if (Buzzer::toggles_left > 0) {
+        Buzzer::toggles_left--;
+    } else {
+        Buzzer::stopPWM();
+    }
 }
