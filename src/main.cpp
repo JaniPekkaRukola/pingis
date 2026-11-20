@@ -9,6 +9,7 @@ Pingis
 #include "Adafruit_GFX.h" //https://github.com/adafruit/Adafruit-GFX-Library/blob/master/src/Adafruit_GFX.cpp
 #include <Adafruit_SSD1306.h>
 #include <Wire.h> //i2c
+#include <buzzer.h>
 // #include <avr/wdt.h> // watchdog TODO: implement this
 
 
@@ -86,6 +87,7 @@ Game game;
 
 void setup(){
     Serial.begin(9600); // TODO: raise this?
+    Buzzer::initialization();
 
     // TODO: change these to register
     pinMode(BUTTON_1_PIN, INPUT_PULLUP);

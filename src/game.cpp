@@ -1,4 +1,5 @@
 #include "game.hh"
+#include "buzzer.h"
 #include <Arduino.h>
 
 Game::Game(){
@@ -66,7 +67,8 @@ bool Game::update(){
     // logic: if collision: 
     //          - change ball dir
     //          - calculate new new ball velocity (x and y) based on friction, paddle & ball velocity, ball angle?
-    // else: score++, ball reset
+    //          - Buzzer::play(Buzzer::PADDLE);
+    // else: score++, ball reset, Buzzer::play(Buzzer::SCORE);
     return true;
 }
 
