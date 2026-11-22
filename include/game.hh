@@ -18,9 +18,9 @@ class Game{
         int p1_score;
         int p2_score;
 
-        bool drawScore; // draws score to the screen
+        bool drawScore;     // draws score to the screen
         bool increaseSpeed; // increases ball speed after a player scores
-        int winScore = 25; // game win score
+        int winScore = 25;  // game win score
         bool enableAudio = false;
         
         

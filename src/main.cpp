@@ -10,6 +10,7 @@ Pingis
 #include <Adafruit_SSD1306.h>   
 #include <Wire.h> //i2c
 #include <buzzer.h>
+#include "logo.hh"
 // #include <avr/wdt.h> // watchdog TODO: implement this
 
 
@@ -115,17 +116,20 @@ void setup(){
         assert(0);  // or for(;;);
     }
 
-    display.setTextSize(1);      // Normal 1:1 pixel scale
-    display.setTextColor(SSD1306_WHITE);
-    // display.setCursor((SCREEN_WIDTH / 2) - 20, SCREEN_HEIGHT / 2);
-    // display.print("STARTING");
-
-    display.display();
-
     display.clearDisplay(); // clear display buffer
 
-    // TODO: display startup logo
+    display.setTextSize(2);
+    display.drawBitmap(0, 0, logo_bmp, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE); // draw bitmap logo
+    display.setTextColor(SSD1306_BLACK);            // set color
+    display.setCursor(1,1);
+    display.print("Ykkosryhma");                    // display name
+    display.display();
+    delay(1000);
 
+    // reset display settings to default
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.clearDisplay(); // clear display buffer
 
     GUI = guiMenu;
 
@@ -133,7 +137,24 @@ void setup(){
 }
 
 
-
+void bombo(){
+    static int x = 0;
+    static unsigned long last = 0;
+    Vector2 end = {93,18};
+    display.drawBitmap(0, 0, bombo_bmp, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+    display.drawLine(x, end.y, end.x, end.y, WHITE);
+    delay(10);
+    if (millis() - last >= (unsigned long)map(x, 0, end.x, 500, 20)){
+        last = millis(); 
+        Buzzer::play(Buzzer::PADDLE);
+    }
+    x++;
+    if (x > end.x){
+        display.clearDisplay();
+        display.display();
+        assert(0);
+    }
+}
 
 
 void loop(){
@@ -229,6 +250,9 @@ void loop(){
             display.setCursor(0, 0);
             display.setTextSize(2);
             display.print("Settings");
+
+            bombo();
+
             display.display();
         } break;
 
@@ -354,6 +378,7 @@ void drawMenu(){
 
 
 
+
 void button_1_Pressed(){
     static unsigned long lastPressTime = 0;
     if (millis() - lastPressTime >= debounceDelay){
@@ -390,4 +415,5 @@ void button_2_Pressed(){
 -   start game by clicking a button
 -   UI: add settings page
 -   UI: add stats page (?)
+-   fix logo (Ykkosryhma) 'ä' and 'ö'
 */

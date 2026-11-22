@@ -195,4 +195,3 @@ bool Game::checkCollision(Player p){
     // no collision
     return false;
 }
-
