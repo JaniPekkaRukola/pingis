@@ -23,8 +23,8 @@ bool enableMenuBall = true;
 
 // Pins
 // -------------------------------------------------
-const int BUTTON_1_PIN = 3;     // PE4 MEGA: PE4
-const int BUTTON_2_PIN = 2;     // PD3 MEGA: PE5
+const uint8_t BUTTON_1_PIN = 3;     // PD3 MEGA: PE5
+const uint8_t BUTTON_2_PIN = 2;     // PD2 MEGA: PE4
 const uint8_t SENSOR_P1_PIN = A0;   // PC0 MEGA: PF0
 const uint8_t SENSOR_P2_PIN = A1;   // PC1 MEGA: PF1
 
@@ -52,10 +52,14 @@ const float ADC_STEPS = (1 << int(R_BITS)) - 1; // Number of steps (2^R_BITS - 1
 // Filter VARS
 const int NUM_READINGS = 5;
 
-// button vars
-bool wasButton1Pressed = false;
-bool wasButton2Pressed = false;
-unsigned long debounceDelay = 250; // og: 150
+// Button VARS
+// volatile bool wasButton1Pressed = false; // OLD button
+// volatile bool wasButton2Pressed = false; // OLD button
+volatile bool button1Pressed = false; // V2 button
+volatile unsigned long button1PressTime = 0; // V2 button
+volatile bool button2Pressed = false; // V2 button
+volatile unsigned long button2PressTime = 0; // V2 button
+const unsigned long DEBOUNCE_DELAY = 20; // OLD button version was 250 <- In V2 version do NOT make this big, maybe test like 30ms if 20ms is bad?
 
 // delta t
 unsigned long prev_time = 0;
@@ -80,8 +84,11 @@ unsigned int menuIndex = 1;
 int getDistance(uint8_t sensor);
 void drawMenu();
 void drawMenuBall();
-void button_1_Pressed();
-void button_2_Pressed();
+void button1_time(); // V2 button for ISR
+void button2_time(); // V2 button for ISR
+bool buttonPressCheck(uint8_t pin, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime); // V2 button
+// void button_1_Pressed(); // OLD button
+// void button_2_Pressed(); // OLD button
 
 #include "game.hh"
 
@@ -99,8 +106,10 @@ void setup(){
     // DDRD = 0b00001100;
     // DDRC = 0b00000011;
 
-    attachInterrupt(digitalPinToInterrupt(BUTTON_1_PIN), button_1_Pressed, FALLING);
-    attachInterrupt(digitalPinToInterrupt(BUTTON_2_PIN), button_2_Pressed, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BUTTON_1_PIN), button1_time, FALLING); // V2 button
+    attachInterrupt(digitalPinToInterrupt(BUTTON_2_PIN), button2_time, FALLING); // V2 button
+    //attachInterrupt(digitalPinToInterrupt(BUTTON_1_PIN), button_1_Pressed, FALLING); // OLD button
+    //attachInterrupt(digitalPinToInterrupt(BUTTON_2_PIN), button_2_Pressed, FALLING); // OLD button
 
 
     // random
@@ -147,10 +156,22 @@ void loop(){
 
     display.clearDisplay(); // clear display buffer
 
-    // input
+    /*
+    // OLD button version started:
     if (wasButton1Pressed){
         wasButton1Pressed = false;
 
+        static unsigned long lastPressTime = 0;
+        if (millis() - lastPressTime >= DEBOUNCE_DELAY){
+            wasButton1Pressed = true;
+            lastPressTime = millis();
+            Serial.print(F("Button 1 pressed "));
+        }
+        ...
+    */
+    // input
+    if (buttonPressCheck(BUTTON_1_PIN, button1Pressed, button1PressTime)){
+        Serial.println("Button 1 was pressed");
         switch(GUI){
 
             case (guiGame):{
@@ -194,9 +215,16 @@ void loop(){
         // }
         
     }
+
+    /*
+    OLD button version started:
     if (wasButton2Pressed){
         wasButton2Pressed = false;
-
+        ....
+    }
+    */
+    if (buttonPressCheck(BUTTON_2_PIN, button2Pressed, button2PressTime)){
+        Serial.println("Button 2 was pressed");
         if (GUI == guiMenu){
             switch(menuIndex){
                 case 1:{ GUI = guiGame; } break;
@@ -352,25 +380,59 @@ void drawMenu(){
     display.drawLine(0, SCREEN_HEIGHT-1, SCREEN_WIDTH, SCREEN_HEIGHT-1, WHITE);
 }
 
+// V2 button ISR
+void button1_time(){
+    button1Pressed = true;
+    button1PressTime = millis();
+}
 
+// V2 button ISR
+void button2_time(){
+    button2Pressed = true;
+    button2PressTime = millis();
+}
 
+// V2 button check if button is pressed
+bool buttonPressCheck(uint8_t pin, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime) {
+    if (!buttonPressed) return false;
+
+    uint8_t oldSREG = SREG;
+    cli();
+    unsigned long pressedTime = buttonPressTime;
+    SREG = oldSREG;
+
+    if (millis() - pressedTime >= DEBOUNCE_DELAY) {
+        buttonPressed = false;
+        return (digitalRead(pin) == LOW);
+    }
+
+    return false;
+}
+
+// OLD button
+/*
 void button_1_Pressed(){
     static unsigned long lastPressTime = 0;
-    if (millis() - lastPressTime >= debounceDelay){
+    if (millis() - lastPressTime >= DEBOUNCE_DELAY){
         wasButton1Pressed = true;
         lastPressTime = millis();
         Serial.print(F("Button 1 pressed "));
     }
 }
+*/
 
+// OLD button
+/*
 void button_2_Pressed(){
     static unsigned long lastPressTime = 0;
-    if (millis() - lastPressTime >= debounceDelay){
+    if (millis() - lastPressTime >= DEBOUNCE_DELAY){
         wasButton2Pressed = true;
         lastPressTime = millis();
         Serial.print(F("Button 2 pressed "));
     }
 }
+*/
+
 
 //TODO:
 /*
