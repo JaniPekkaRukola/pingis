@@ -416,9 +416,6 @@ void button2_time(){
     button2PressTime = millis();
 }
 
-<<<<<<< HEAD
-
-=======
 // V2 button check if button is pressed
 bool buttonPressCheck(uint8_t pin, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime) {
     if (!buttonPressed) return false;
@@ -438,7 +435,6 @@ bool buttonPressCheck(uint8_t pin, volatile bool &buttonPressed, volatile unsign
 
 // OLD button
 /*
->>>>>>> d449dfa23c8d7f5cc7bea4fa8b86074abd18b876
 void button_1_Pressed(){
     static unsigned long lastPressTime = 0;
     if (millis() - lastPressTime >= DEBOUNCE_DELAY){
