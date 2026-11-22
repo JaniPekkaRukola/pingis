@@ -21,6 +21,7 @@ class Game{
         bool drawScore; // draws score to the screen
         bool increaseSpeed; // increases ball speed after a player scores
         int winScore = 25; // game win score
+        bool enableAudio = false;
         
         
         public:
@@ -32,7 +33,8 @@ class Game{
         void draw();
         void drawUI();
         bool checkCollision(Player p);
-        bool startGame();
+        void startGame();
+        void stopGame();
         void roundReset();
         // bool resetGame();
 

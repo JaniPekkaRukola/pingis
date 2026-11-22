@@ -11,7 +11,7 @@ Game::Game(){
     this->gameID = 0;
     this->playerOffset = 3;
     this->drawScore = true;
-    this->increaseSpeed = false;
+    this->increaseSpeed = true;
     
     // player 1 init
     this->p1.setWidth(this->paddleSize.x);
@@ -40,7 +40,7 @@ Game::Game(){
 
 Game::~Game(){}
 
-bool Game::startGame(){
+void Game::startGame(){
     // TODO: randomize starting dir, or let the loser start when not first round?
     this->ball.setDir(true, false, false);
     this->ball.setVelocity({1.0, 0.0});
@@ -48,7 +48,12 @@ bool Game::startGame(){
     this->gameActive = true;
 
     if (DEBUG) Serial.println(F("Game starting"));
-    return true;
+}
+
+void Game::stopGame(){
+    this->ball.setDir(false, false, true);
+    this->gameActive = false;
+    if (DEBUG) Serial.println(F("Game stopping"));
 }
 
 // bool Game::setScore(int s){
@@ -86,7 +91,7 @@ bool Game::update(){
         
         // check ball collision with player 1
         if (checkCollision(this->p1)){
-            // Buzzer::play(Buzzer::PADDLE);
+            if (this->enableAudio) Buzzer::play(Buzzer::PADDLE);
             this->ball.setDirX(true);
             // TODO: calculate new velocity for ball x and y
         }
@@ -94,7 +99,7 @@ bool Game::update(){
         // ball out of bounds (player 1 missed) -> player 2 scores
         else if (this->ball.getPos().x < 0){
             this->p2_score++;
-            // Buzzer::play(Buzzer::SCORE);
+            if (this->enableAudio) Buzzer::play(Buzzer::SCORE);
             this->ball.toggleDirX();
             roundReset();
             if (DEBUG) Serial.println(F("PLAYER 2 SCORES!"));
@@ -106,7 +111,7 @@ bool Game::update(){
 
         // check ball collision with player 2
         if (checkCollision(this->p2)){
-            // Buzzer::play(Buzzer::PADDLE);
+            if (this->enableAudio) Buzzer::play(Buzzer::PADDLE);
             this->ball.setDirX(false);
             // TODO: calculate new velocity for ball x and y
         }
@@ -114,7 +119,7 @@ bool Game::update(){
         // ball out of bounds (player 2 missed) -> player 1 scores
         else if (this->ball.getPos().x > SCREEN_WIDTH){
             this->p1_score++;
-            // Buzzer::play(Buzzer::SCORE);
+            if (this->enableAudio) Buzzer::play(Buzzer::SCORE);
             this->ball.toggleDirX();
             roundReset();
             if (DEBUG) Serial.println(F("PLAYER 1 SCORES!"));

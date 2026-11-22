@@ -34,6 +34,8 @@ bool Player::update(){
     // invert distance (since [0,0] is topleft)
     dist = SCREEN_HEIGHT - dist;
 
+    if (dist > 100.0f) return true;
+
     // out of bound top
     if (dist < 0) dist = 0;
     

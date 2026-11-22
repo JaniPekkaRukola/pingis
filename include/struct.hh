@@ -20,7 +20,6 @@
 
 
 
-
 // Structs
 // -------------------------------------------------
 
@@ -43,6 +42,8 @@ struct Hitbox {
 };
 
 
+const Vector2 charSize_1 = {6, 8};      // display's character size in pixels (when text size 1);
+const Vector2 charSize_2 = {12, 16};    // display's character size in pixels (when text size 2);
 
 // enum gameMode{} ? like: normal, increasing speed, gravity? (ball gravitates lower), ball is invisible sometimes etc
 
