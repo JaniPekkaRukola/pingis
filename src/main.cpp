@@ -4,16 +4,16 @@ Pingis
 11.2026 (init 3.11.2026)
 */
 #include <Arduino.h>
-// #include <EEPROM.h>
+#include <EEPROM.h>
 #include "Adafruit_GFX.h" //https://github.com/adafruit/Adafruit-GFX-Library/blob/master/src/Adafruit_GFX.cpp
 #include <Adafruit_SSD1306.h>
 #include <Wire.h> //i2c
-#include <buzzer.h>
+#include "buzzer.hh"
 #include "logo.hh"
-// #include <avr/wdt.h> // watchdog TODO: implement this
+// #include <avr/wdt.h> // watchdog TODO: implement this?
 
 
-// settings
+// hidden settings
 // -------------------------------------------------
 bool printFps = false;
 bool printSensor = false;
@@ -70,8 +70,13 @@ enum guiState { //TODO: move this to "struct.hh"?
     guiMax
 };
 guiState GUI = guiMenu;
-unsigned int menuIndex = 1;
+int menuIndex = 1;
+int settingsIndex = 1;
 
+// EEPROM
+const uint16_t SIGNATURE = 0xAB42;
+const int SIGNATURE_ADDR = 0;
+const int DATA_ADDR = 2;
 
 
 
@@ -80,20 +85,24 @@ unsigned int menuIndex = 1;
 void initADC();
 uint16_t readAnalog(uint8_t channel);
 int getDistance(uint8_t sensor);
+void loadEEPROM();
 void drawMenu();
+void drawSettings();
 void drawMenuBall();
+void drawTimeUP();
 bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime);
 
 #include "game.hh"
 
 Game game;
 
-
 void setup(){
     Serial.begin(115200);
     Buzzer::initialization();    
+    game.gameTimerInitialization();
     initADC();
-    randomSeed(readAnalog(3)); // seed for random ball direction on game start and on main menu
+    randomSeed(readAnalog(2)); // seed for random ball direction on game start and on main menu
+    loadEEPROM();
 
     DDRE &= ~(BUTTON_1 | BUTTON_2); // D2 and D3 -> INPUT
     PORTE |= BUTTON_1 | BUTTON_2; // D2 and D3 -> PULLUP ON
@@ -113,7 +122,7 @@ void setup(){
     display.cp437(true);
     display.setTextSize(2);
     display.drawBitmap(0, 0, logo_bmp, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE); // draw bitmap logo
-    display.setTextColor(SSD1306_BLACK);            // set color
+    display.setTextColor(SSD1306_BLACK); // set color
     display.setCursor(1,1);
     display.print("Ykk\x94sryhm\x84"); // display name
     display.display();
@@ -128,6 +137,18 @@ void setup(){
 
     // game.startGame();
 }
+
+void loadEEPROM() {
+    uint16_t storedSignature;
+    EEPROM.get(SIGNATURE_ADDR, storedSignature);
+    
+    if (storedSignature != SIGNATURE) {
+        EEPROM.put(DATA_ADDR, game.settings);
+        EEPROM.put(SIGNATURE_ADDR, SIGNATURE);
+    } else {
+        EEPROM.get(DATA_ADDR, game.settings);
+    }
+};
 
 void bombo(){
     static int x = 0;
@@ -147,7 +168,6 @@ void bombo(){
         for(;;);
     }
 }
-
 
 void loop(){
     // delta t
@@ -175,45 +195,71 @@ void loop(){
             } break;
 
             case (guiSettings):{
-                // TODO: save settings to eeprom?
-                GUI = guiMenu;
+                settingsIndex++;
+                if (settingsIndex > 4) settingsIndex = 1;
             } break;
 
             case (guiStats):{
                 GUI = guiMenu;
             } break;
 
-            default: { Serial.println(F("gui switch defaulted @wasButton1Pressed")); }
+            default: { Serial.println(F("gui switch defaulted @button1Pressed")); }
         }
 
 
 
-        // if (GUI != guiMenu){
+        /*
+        if (GUI != guiMenu){
 
-        //     // update gui
-        //     GUI = static_cast<guiState>(static_cast<int>(GUI) + 1);
+        // update gui
+        GUI = static_cast<guiState>(static_cast<int>(GUI) + 1);
             
-        //     if (GUI >= guiMax) GUI = guiMenu;
-        //     Serial.print(F("GUI = "));
-        //     Serial.println(GUI);
-            
-        // }
-        // else{
-        //     // multipurposing button 1 for menu selection and gui switching
-        //     menuIndex++;
-        //     if (menuIndex > 3) menuIndex = 1;
-        // }
-        
+        if (GUI >= guiMax) GUI = guiMenu;
+        Serial.print(F("GUI = "));
+         Serial.println(GUI);
+        } else {
+        // multipurposing button 1 for menu selection and gui switching
+        menuIndex++;
+        if (menuIndex > 3) menuIndex = 1;
+        }
+        */
     }
 
     if (buttonPressCheck(BUTTON_2, button2Pressed, button2PressTime)){
         Serial.println("Button 2 was pressed");
         if (GUI == guiMenu){
-            switch(menuIndex){
+            switch(menuIndex) {
                 case 1:{ GUI = guiGame; game.startGame(); } break;
                 case 2:{ GUI = guiSettings; } break;
                 case 3:{ GUI = guiStats; } break;
                 default:{ Serial.println(F("menuIndex switch defaulted")); }
+            }
+        } else if (GUI == guiSettings) {
+            switch(settingsIndex) {
+                case 1: {
+                    game.settings.ballSpeed += 0.5f;
+                    if (game.settings.ballSpeed > 4.0f) game.settings.ballSpeed = 1.0f;
+                }
+                break;
+
+                case 2: {
+                    game.settings.increaseSpeed = !game.settings.increaseSpeed;
+                }
+                break;
+
+                case 3: {
+                    game.settings.enableAudio = !game.settings.enableAudio;
+                    if (game.settings.enableAudio == 1) Buzzer::play(Buzzer::SETTING);
+                }
+                break;
+
+                case 4: {
+                    EEPROM.put(DATA_ADDR, game.settings);
+                    GUI = guiMenu;
+                }
+                break;
+
+                default:{ Serial.println(F("settingsIndex switch defaulted")); }
             }
         }
     }
@@ -227,22 +273,29 @@ void loop(){
         } break;
 
         case (guiGame):{
+
+            if (game.isTimeUp()) {
+                game.stopGame();
+                drawTimeUP();
+                display.display();
+
+                // Wait 5 seconds
+                unsigned long timeNow = millis();
+                while (millis() - timeNow < 5000);
+
+                GUI = guiMenu;
+                break;
+            }
             game.update();
             game.draw();
             game.drawUI();
 
             // drawTest(fps);
-
             display.display();
         } break;
 
         case (guiSettings):{
-            display.setCursor(0, 0);
-            display.setTextSize(2);
-            display.print("Settings");
-
-            bombo();
-
+            drawSettings();
             display.display();
         } break;
 
@@ -371,6 +424,61 @@ void drawMenu(){
     display.drawLine(0, SCREEN_HEIGHT-1, SCREEN_WIDTH, SCREEN_HEIGHT-1, WHITE);
 }
 
+void drawSettings(){
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(2);
+    display.setCursor(0, 0);
+    display.print("Settings");
+
+    Vector2 boxSize = {8, 8};
+    int padding = 4;
+    int y_pos = 16;
+    int x_pos = boxSize.x + padding;
+    display.setTextSize(1);
+
+    // increase ball speed
+    (settingsIndex == 1) ?
+        display.fillRect(0, y_pos, boxSize.x, boxSize.y, WHITE) :
+        display.drawRect(0, y_pos, boxSize.x, boxSize.y, WHITE);
+    display.setCursor(x_pos, y_pos);
+    display.print("Ball speed: ");
+    display.print(game.settings.ballSpeed);
+
+    // ball's speed change after every round
+    y_pos += boxSize.y + padding;
+    (settingsIndex == 2) ?
+        display.fillRect(0, y_pos, boxSize.x, boxSize.y, WHITE) :
+        display.drawRect(0, y_pos, boxSize.x, boxSize.y, WHITE);
+    display.setCursor(x_pos, y_pos);
+    display.print("Ball speed up: ");
+    display.print(game.settings.increaseSpeed ? "ON" : "OFF");
+
+    // audio
+    y_pos += boxSize.y + padding;
+    (settingsIndex == 3) ?
+        display.fillRect(0, y_pos, boxSize.x, boxSize.y, WHITE) :
+        display.drawRect(0, y_pos, boxSize.x, boxSize.y, WHITE);
+    display.setCursor(x_pos, y_pos);
+    display.print("Audio: ");
+    display.print(game.settings.enableAudio ? "ON" : "OFF");
+
+    // back
+    y_pos += boxSize.y + padding;
+    (settingsIndex == 4) ?
+        display.fillRect(0, y_pos, boxSize.x, boxSize.y, WHITE) :
+        display.drawRect(0, y_pos, boxSize.x, boxSize.y, WHITE);
+    display.setCursor(x_pos, y_pos);
+    display.print("Back");
+}
+
+void drawTimeUP(){
+    display.clearDisplay();
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(2);
+    display.setCursor(16, 24);
+    display.print("TIME UP!");
+}
+
 // D2 pin ISR
 ISR(INT4_vect) {
     button1Pressed = true;
@@ -403,10 +511,8 @@ bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile uns
 //TODO:
 /*
 -   sensor smoothing (paddle should not jump around if sensor reads bad values)
--   eeprom save/read
+-   watchdog? <- is not strictly needed
 -   score uart
--   watchdog?
--   timer
 -   ball friction
 -   player paddle velocity calculation
 -   bugfix: ball should bounce back from the closest edge of the paddle (currently (atleast for p1) ball bounces back from the back edge when colliding)

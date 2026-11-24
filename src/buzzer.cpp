@@ -1,4 +1,4 @@
-#include "buzzer.h"
+#include "buzzer.hh"
 #include <Arduino.h>
 
 namespace Buzzer {
@@ -9,8 +9,12 @@ namespace Buzzer {
 
     constexpr uint16_t PADDLE_FREQ = 2200;
     constexpr uint8_t PADDLE_TIME_MS = 30;
+
     constexpr uint16_t SCORE_FREQ = 1500;
     constexpr uint8_t SCORE_TIME_MS = 80;
+
+    constexpr uint16_t SETTING_FREQ = 1700;
+    constexpr uint8_t SETTING_TIME_MS = 50;
 
     void stopPWM() {
         uint8_t old_sreg = SREG;
@@ -46,6 +50,7 @@ namespace Buzzer {
         switch (sound) {
         case PADDLE: startPWM(PADDLE_FREQ, PADDLE_TIME_MS); break;
         case SCORE: startPWM(SCORE_FREQ, SCORE_TIME_MS); break;
+        case SETTING: startPWM(SETTING_FREQ, SETTING_TIME_MS); break;
         default: break;
         }
     }

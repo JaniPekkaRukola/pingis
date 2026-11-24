@@ -3,7 +3,8 @@
 namespace Buzzer {
     enum Sound {
         PADDLE,
-        SCORE
+        SCORE,
+        SETTING
     };
     
     void initialization();

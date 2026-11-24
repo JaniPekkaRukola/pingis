@@ -25,6 +25,12 @@ struct Dir { // TODO: move this back to "ball.hh" cause not needed elsewhere?
     bool stationary = true;
 };
 
+struct GameSettings {
+    float ballSpeed = 1.0f;
+    bool increaseSpeed = true;
+    bool enableAudio = true; 
+};
+
 struct Vector2 {
     float x;
     float y;

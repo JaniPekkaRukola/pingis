@@ -19,9 +19,7 @@ class Game{
         int p2_score;
 
         bool drawScore;     // draws score to the screen
-        bool increaseSpeed; // increases ball speed after a player scores
         int winScore = 25;  // game win score
-        bool enableAudio = true;
         
         
         public:
@@ -36,6 +34,10 @@ class Game{
         void startGame();
         void stopGame();
         void roundReset();
-        // bool resetGame();
 
+        void gameTimerInitialization();
+        void startGameTimer();
+        bool isTimeUp();
+        GameSettings settings;
+        // bool resetGame();
 };

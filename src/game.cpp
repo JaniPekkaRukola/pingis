@@ -1,17 +1,21 @@
 #include "game.hh"
-#include "buzzer.h"
+#include "buzzer.hh"
 #include <Arduino.h>
 #include "struct.hh"
 
 #include <Adafruit_SSD1306.h>
 extern Adafruit_SSD1306 display;
 
+// Game timer
+volatile uint8_t game_time = 60; // seconds
+volatile bool timeUp = false;
+
 Game::Game(){
     this->gameActive = false;
     this->gameID = 0;
     this->playerOffset = 3;
     this->drawScore = true;
-    this->increaseSpeed = true;
+    this->settings.increaseSpeed = true;
     
     // player 1 init
     this->p1.setWidth(this->paddleSize.x);
@@ -43,16 +47,18 @@ Game::~Game(){}
 void Game::startGame(){
     uint8_t randomDir = random(0,2);
     this->ball.setDir(randomDir == 1, false, false);
-    this->ball.setVelocity({1.0, 0.0});
+    this->ball.setVelocity({this->settings.ballSpeed, 0.0});
 
     this->gameActive = true;
 
+    this->startGameTimer();
     if (DEBUG) Serial.println(F("Game starting"));
 }
 
 void Game::stopGame(){
     this->ball.setDir(false, false, true);
     this->gameActive = false;
+    TIMSK1 &= ~(1 << OCIE1A); // dont compare timer interrupt anymore
     if (DEBUG) Serial.println(F("Game stopping"));
 }
 
@@ -91,7 +97,7 @@ bool Game::update(){
         
         // check ball collision with player 1
         if (checkCollision(this->p1)){
-            if (this->enableAudio) Buzzer::play(Buzzer::PADDLE);
+            if (this->settings.enableAudio) Buzzer::play(Buzzer::PADDLE);
             this->ball.setDirX(true);
             // TODO: calculate new velocity for ball x and y
         }
@@ -99,7 +105,7 @@ bool Game::update(){
         // ball out of bounds (player 1 missed) -> player 2 scores
         else if (this->ball.getPos().x < 0){
             this->p2_score++;
-            if (this->enableAudio) Buzzer::play(Buzzer::SCORE);
+            if (this->settings.enableAudio) Buzzer::play(Buzzer::SCORE);
             this->ball.toggleDirX();
             roundReset();
             if (DEBUG) Serial.println(F("PLAYER 2 SCORES!"));
@@ -111,7 +117,7 @@ bool Game::update(){
 
         // check ball collision with player 2
         if (checkCollision(this->p2)){
-            if (this->enableAudio) Buzzer::play(Buzzer::PADDLE);
+            if (this->settings.enableAudio) Buzzer::play(Buzzer::PADDLE);
             this->ball.setDirX(false);
             // TODO: calculate new velocity for ball x and y
         }
@@ -119,7 +125,7 @@ bool Game::update(){
         // ball out of bounds (player 2 missed) -> player 1 scores
         else if (this->ball.getPos().x > SCREEN_WIDTH){
             this->p1_score++;
-            if (this->enableAudio) Buzzer::play(Buzzer::SCORE);
+            if (this->settings.enableAudio) Buzzer::play(Buzzer::SCORE);
             this->ball.toggleDirX();
             roundReset();
             if (DEBUG) Serial.println(F("PLAYER 1 SCORES!"));
@@ -134,7 +140,7 @@ void Game::roundReset(){
 
     if (DEBUG) Serial.println(F("round reset"));
 
-    if (this->increaseSpeed){
+    if (this->settings.increaseSpeed){
         this->ball.increaseVelocity({0.1, 0.0});
     }
 
@@ -152,6 +158,8 @@ void Game::draw(){
 
 void Game::drawUI(){
     display.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+    display.setCursor(58,2);
+    display.print(game_time);
 
     if (this->drawScore){
         // TODO: shift score to the left when double digits
@@ -194,4 +202,40 @@ bool Game::checkCollision(Player p){
 
     // no collision
     return false;
+}
+
+void Game::gameTimerInitialization() {
+    uint8_t old_sreg = SREG;
+    cli();
+    TIMSK1 = 0;
+    TCCR1A = 0;
+    TCCR1B = 0;
+    TCNT1  = 0;
+
+    OCR1A = 15624; // from output frequency formula
+    TCCR1B |= (1 << WGM12) | (1 << CS10) | (1 << CS12); // CTC mode and 1024 prescaler
+    SREG = old_sreg;
+};
+
+void Game::startGameTimer() {
+    uint8_t old_sreg = SREG;
+    cli();
+    TCNT1 = 0;
+    game_time = 60;
+    timeUp = false;
+    TIFR1 = (1 << OCF1A); // clear interrupt flag (if there would be old one hanging)
+    TIMSK1 = (1 << OCIE1A); // to compare interrupt
+    SREG = old_sreg;
+}
+
+bool Game::isTimeUp() {
+    return timeUp;
+}
+
+ISR(TIMER1_COMPA_vect) {
+    if (game_time > 0) {
+        game_time--;
+    } else {
+        timeUp = true;
+    }
 }
