@@ -67,9 +67,11 @@ enum guiState { //TODO: move this to "struct.hh"?
     guiGame,    // game
     guiSettings,
     guiStats,    // stats from eeprom
-    guiMax
+    guiMax,
+    guiTimeUP
 };
 guiState GUI = guiMenu;
+unsigned long timeUPstart = 0;
 int menuIndex = 1;
 int settingsIndex = 1;
 
@@ -239,25 +241,21 @@ void loop(){
                 case 1: {
                     game.settings.ballSpeed += 0.5f;
                     if (game.settings.ballSpeed > 4.0f) game.settings.ballSpeed = 1.0f;
-                }
-                break;
+                } break;
 
                 case 2: {
                     game.settings.increaseSpeed = !game.settings.increaseSpeed;
-                }
-                break;
+                } break;
 
                 case 3: {
                     game.settings.enableAudio = !game.settings.enableAudio;
                     if (game.settings.enableAudio == 1) Buzzer::play(Buzzer::SETTING);
-                }
-                break;
+                } break;
 
                 case 4: {
                     EEPROM.put(DATA_ADDR, game.settings);
                     GUI = guiMenu;
-                }
-                break;
+                } break;
 
                 default:{ Serial.println(F("settingsIndex switch defaulted")); }
             }
@@ -276,14 +274,8 @@ void loop(){
 
             if (game.isTimeUp()) {
                 game.stopGame();
-                drawTimeUP();
-                display.display();
-
-                // Wait 5 seconds
-                unsigned long timeNow = millis();
-                while (millis() - timeNow < 5000);
-
-                GUI = guiMenu;
+                timeUPstart = millis();
+                GUI = guiTimeUP;
                 break;
             }
             game.update();
@@ -292,6 +284,15 @@ void loop(){
 
             // drawTest(fps);
             display.display();
+        } break;
+
+        case (guiTimeUP):{
+            drawTimeUP();
+            display.display();
+
+            if (millis() - timeUPstart >= 3000) {
+                GUI = guiMenu;
+            }
         } break;
 
         case (guiSettings):{
