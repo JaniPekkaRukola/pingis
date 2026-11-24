@@ -5,9 +5,8 @@ Pingis
 */
 #include <Arduino.h>
 // #include <EEPROM.h>
-#include <assert.h>
 #include "Adafruit_GFX.h" //https://github.com/adafruit/Adafruit-GFX-Library/blob/master/src/Adafruit_GFX.cpp
-#include <Adafruit_SSD1306.h>   
+#include <Adafruit_SSD1306.h>
 #include <Wire.h> //i2c
 #include <buzzer.h>
 #include "logo.hh"
@@ -24,10 +23,8 @@ bool enableMenuBall = true;
 
 // Pins
 // -------------------------------------------------
-const uint8_t BUTTON_1_PIN = 3;     // PD3 MEGA: PE5
-const uint8_t BUTTON_2_PIN = 2;     // PD2 MEGA: PE4
-const uint8_t SENSOR_P1_PIN = A0;   // PC0 MEGA: PF0
-const uint8_t SENSOR_P2_PIN = A1;   // PC1 MEGA: PF1
+const uint8_t BUTTON_1 = (1 << PE4); // D2
+const uint8_t BUTTON_2 = (1 << PE5); // D3
 
 
 #include "struct.hh"
@@ -54,13 +51,11 @@ const float ADC_STEPS = (1 << int(R_BITS)) - 1; // Number of steps (2^R_BITS - 1
 const int NUM_READINGS = 5;
 
 // Button VARS
-// volatile bool wasButton1Pressed = false; // OLD button
-// volatile bool wasButton2Pressed = false; // OLD button
-volatile bool button1Pressed = false; // V2 button
-volatile unsigned long button1PressTime = 0; // V2 button
-volatile bool button2Pressed = false; // V2 button
-volatile unsigned long button2PressTime = 0; // V2 button
-const unsigned long DEBOUNCE_DELAY = 20; // OLD button version was 250 <- In V2 version do NOT make this big, maybe test like 30ms if 20ms is bad?
+volatile bool button1Pressed = false;
+volatile unsigned long button1PressTime = 0;
+volatile bool button2Pressed = false;
+volatile unsigned long button2PressTime = 0;
+const unsigned long DEBOUNCE_DELAY = 20;
 
 // delta t
 unsigned long prev_time = 0;
@@ -82,14 +77,12 @@ unsigned int menuIndex = 1;
 
 
 // forward decls
+void initADC();
+uint16_t readAnalog(uint8_t channel);
 int getDistance(uint8_t sensor);
 void drawMenu();
 void drawMenuBall();
-void button1_time(); // V2 button for ISR
-void button2_time(); // V2 button for ISR
-bool buttonPressCheck(uint8_t pin, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime); // V2 button
-// void button_1_Pressed(); // OLD button
-// void button_2_Pressed(); // OLD button
+bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime);
 
 #include "game.hh"
 
@@ -97,41 +90,32 @@ Game game;
 
 
 void setup(){
-    Serial.begin(9600); // TODO: raise this?
-    Buzzer::initialization();
+    Serial.begin(115200);
+    Buzzer::initialization();    
+    initADC();
+    randomSeed(readAnalog(3)); // seed for random ball direction on game start and on main menu
 
-    // TODO: change these to register
-    pinMode(BUTTON_1_PIN, INPUT_PULLUP);
-    pinMode(BUTTON_2_PIN, INPUT_PULLUP);
-
-    // DDRD = 0b00001100;
-    // DDRC = 0b00000011;
-
-    attachInterrupt(digitalPinToInterrupt(BUTTON_1_PIN), button1_time, FALLING); // V2 button
-    attachInterrupt(digitalPinToInterrupt(BUTTON_2_PIN), button2_time, FALLING); // V2 button
-    //attachInterrupt(digitalPinToInterrupt(BUTTON_1_PIN), button_1_Pressed, FALLING); // OLD button
-    //attachInterrupt(digitalPinToInterrupt(BUTTON_2_PIN), button_2_Pressed, FALLING); // OLD button
-
-
-    // random
-    // randomSeed(analogRead(A2));
-    // const int rand = random(5);
-    // if (DEBUG) Serial.println("Random number was: " + String(rand));
-
+    DDRE &= ~(BUTTON_1 | BUTTON_2); // D2 and D3 -> INPUT
+    PORTE |= BUTTON_1 | BUTTON_2; // D2 and D3 -> PULLUP ON
+    // Trigger INT4 and INT5 on FALLING edges (button pressed)
+    EICRB = 0b00001010;
+    EIFR |= (1 << INTF4) | (1 << INTF5);
+    EIMSK |= (1 << INT4) | (1 << INT5);
 
     // display (from "ssd1306_128x64_i2c" example)
     if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) { //   SSD1306_EXTERNALVCC
         Serial.println(F("[ERROR @setup()]: SSD1306 allocation failed"));
-        assert(0);  // or for(;;);
+        for(;;);
     }
 
     display.clearDisplay(); // clear display buffer
 
+    display.cp437(true);
     display.setTextSize(2);
     display.drawBitmap(0, 0, logo_bmp, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE); // draw bitmap logo
     display.setTextColor(SSD1306_BLACK);            // set color
     display.setCursor(1,1);
-    display.print("Ykkosryhma");                    // display name
+    display.print("Ykk\x94sryhm\x84"); // display name
     display.display();
     delay(1000);
 
@@ -144,7 +128,6 @@ void setup(){
 
     // game.startGame();
 }
-
 
 void bombo(){
     static int x = 0;
@@ -161,13 +144,12 @@ void bombo(){
     if (x > end.x){
         display.clearDisplay();
         display.display();
-        assert(0);
+        for(;;);
     }
 }
 
 
 void loop(){
-
     // delta t
     unsigned long current_time = millis();
 	delta_t = current_time - prev_time;
@@ -177,21 +159,8 @@ void loop(){
 
     display.clearDisplay(); // clear display buffer
 
-    /*
-    // OLD button version started:
-    if (wasButton1Pressed){
-        wasButton1Pressed = false;
-
-        static unsigned long lastPressTime = 0;
-        if (millis() - lastPressTime >= DEBOUNCE_DELAY){
-            wasButton1Pressed = true;
-            lastPressTime = millis();
-            Serial.print(F("Button 1 pressed "));
-        }
-        ...
-    */
     // input
-    if (buttonPressCheck(BUTTON_1_PIN, button1Pressed, button1PressTime)){
+    if (buttonPressCheck(BUTTON_1, button1Pressed, button1PressTime)){
         Serial.println("Button 1 was pressed");
         switch(GUI){
 
@@ -237,18 +206,11 @@ void loop(){
         
     }
 
-    /*
-    OLD button version started:
-    if (wasButton2Pressed){
-        wasButton2Pressed = false;
-        ....
-    }
-    */
-    if (buttonPressCheck(BUTTON_2_PIN, button2Pressed, button2PressTime)){
+    if (buttonPressCheck(BUTTON_2, button2Pressed, button2PressTime)){
         Serial.println("Button 2 was pressed");
         if (GUI == guiMenu){
             switch(menuIndex){
-                case 1:{ GUI = guiGame; } break;
+                case 1:{ GUI = guiGame; game.startGame(); } break;
                 case 2:{ GUI = guiSettings; } break;
                 case 3:{ GUI = guiStats; } break;
                 default:{ Serial.println(F("menuIndex switch defaulted")); }
@@ -296,25 +258,29 @@ void loop(){
 
 }
 
+void initADC() {
+    DDRF &= ~((1 << PF0) | (1 << PF1)); // A0 and A1 -> INPUT
+    DIDR0 |= (1 << ADC1D) | (1 << ADC0D);
+    ADMUX = (1 << REFS0); // Reference voltage AVcc
+    ADCSRA = (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) | (1 << ADEN); // 128 prescaler and enable ADC
+}
+
+uint16_t readAnalog(uint8_t channel) {
+    ADMUX = (ADMUX & ~0b00011111) | (channel & 0x07); // select channel
+    ADCSRA |= (1 << ADSC);
+    while (ADCSRA & (1 << ADSC));
+    return ADC;
+}
+
 int getDistance(uint8_t sensor){    // TODO: move this to a header file
+    uint8_t channel = (sensor == A0) ? 0 : 1;
 
     int highest = -1;
     int lowest = 2000;
     long totalADC = 0;
 
     for (int i = 0; i < NUM_READINGS; i++) {
-        int rawADC = analogRead(sensor);
-
-        // TODO: replace analogRead with registers:
-        // NOTE: below not working
-        // uint8_t luku, mask, res; // TODO: translate "luku" to english
-        // if (sensor == A0) mask = 0b00000001;
-        // else if (sensor == A1) mask = 0b00000010;
-        // else assert(0);
-
-        // luku = PINC;
-        // int rawADC = luku & mask;
-        
+        int rawADC = readAnalog(channel);
         if (rawADC > highest) highest = rawADC;
         if (rawADC < lowest) lowest = rawADC;
         
@@ -329,13 +295,12 @@ int getDistance(uint8_t sensor){    // TODO: move this to a header file
 
     if (printSensor) {
         Serial.print(F("sensor("));
-        Serial.print(sensor);
+        Serial.print(channel);
         Serial.println(") = " + String(distance_cm) + " cm");
     }
 
     return distance_cm;
 }
-
 
 int getId(){   // TODO: move this to a header file
     return random();
@@ -351,12 +316,14 @@ void drawMenuBall(){
     pos.x += vel.x;
     pos.y += vel.y;
     display.drawRect(pos.x, pos.y, size, size, WHITE);
-    float rx = random(0,100)/100;
-    float ry = random(0,100)/100;
-    float x = random(0,1);
-    float y = random(0,1);
+    float rx = random(0,100)/100.0;
+    float ry = random(0,100)/100.0;
+    float x = random(0,2);
+    float y = random(0,2);
     x == 1 ? vel.x += rx : vel.x -= rx;
     y == 1 ? vel.y += ry : vel.y -= ry;
+    vel.x = constrain(vel.x, -4.0f, 4.0f);
+    vel.y = constrain(vel.y, -4.0f, 4.0f);
 }
 
 void drawMenu(){
@@ -404,20 +371,19 @@ void drawMenu(){
     display.drawLine(0, SCREEN_HEIGHT-1, SCREEN_WIDTH, SCREEN_HEIGHT-1, WHITE);
 }
 
-// V2 button ISR
-void button1_time(){
+// D2 pin ISR
+ISR(INT4_vect) {
     button1Pressed = true;
     button1PressTime = millis();
 }
 
-// V2 button ISR
-void button2_time(){
+// D3 pin ISR
+ISR(INT5_vect) {
     button2Pressed = true;
     button2PressTime = millis();
 }
 
-// V2 button check if button is pressed
-bool buttonPressCheck(uint8_t pin, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime) {
+bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime) {
     if (!buttonPressed) return false;
 
     uint8_t oldSREG = SREG;
@@ -427,54 +393,23 @@ bool buttonPressCheck(uint8_t pin, volatile bool &buttonPressed, volatile unsign
 
     if (millis() - pressedTime >= DEBOUNCE_DELAY) {
         buttonPressed = false;
-        return (digitalRead(pin) == LOW);
+        return ((PINE & (button)) == 0);
     }
 
     return false;
 }
 
-// OLD button
-/*
-void button_1_Pressed(){
-    static unsigned long lastPressTime = 0;
-    if (millis() - lastPressTime >= DEBOUNCE_DELAY){
-        wasButton1Pressed = true;
-        lastPressTime = millis();
-        Serial.print(F("Button 1 pressed "));
-    }
-}
-*/
-
-// OLD button
-/*
-void button_2_Pressed(){
-    static unsigned long lastPressTime = 0;
-    if (millis() - lastPressTime >= DEBOUNCE_DELAY){
-        wasButton2Pressed = true;
-        lastPressTime = millis();
-        Serial.print(F("Button 2 pressed "));
-    }
-}
-*/
-
 
 //TODO:
 /*
--   switch to MEGA <-- MEGA "version" is ready 20.11., uncomment every code line where is "MEGA" keyword (and remove the equivalent Nano code line)
 -   sensor smoothing (paddle should not jump around if sensor reads bad values)
--   sensor max value (sensor reading should be disregarded if the value is > max accepted value) -> this prevents bad sensor readings (eg: bounceback from roof)
 -   eeprom save/read
 -   score uart
 -   watchdog?
 -   timer
 -   ball friction
 -   player paddle velocity calculation
--   read sensor with registers
 -   bugfix: ball should bounce back from the closest edge of the paddle (currently (atleast for p1) ball bounces back from the back edge when colliding)
--   get rid of assert. dont really work with pio
--   button(s) activate even when releasing the button (isr acts like set to "CHANGE" but its set to "FALLING") investigate
--   start game by clicking a button
 -   UI: add settings page
 -   UI: add stats page (?)
--   fix logo (Ykkosryhma) 'ä' and 'ö'
 */

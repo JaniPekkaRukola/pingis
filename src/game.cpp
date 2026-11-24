@@ -41,8 +41,8 @@ Game::Game(){
 Game::~Game(){}
 
 void Game::startGame(){
-    // TODO: randomize starting dir, or let the loser start when not first round?
-    this->ball.setDir(true, false, false);
+    uint8_t randomDir = random(0,2);
+    this->ball.setDir(randomDir == 1, false, false);
     this->ball.setVelocity({1.0, 0.0});
 
     this->gameActive = true;

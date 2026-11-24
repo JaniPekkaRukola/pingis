@@ -21,7 +21,7 @@ class Game{
         bool drawScore;     // draws score to the screen
         bool increaseSpeed; // increases ball speed after a player scores
         int winScore = 25;  // game win score
-        bool enableAudio = false;
+        bool enableAudio = true;
         
         
         public:

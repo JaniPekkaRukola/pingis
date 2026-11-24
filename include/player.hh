@@ -2,6 +2,7 @@
 
 // #include <iostream>
 #include "struct.hh"
+#include <stdint.h>
 
 class Player{
 

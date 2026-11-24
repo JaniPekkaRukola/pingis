@@ -1,9 +1,5 @@
 #pragma once
 
-#include <Arduino.h>
-#include <assert.h>
-
-
 // Defines
 // -------------------------------------------------
 

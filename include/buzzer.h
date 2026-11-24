@@ -8,4 +8,4 @@ namespace Buzzer {
     
     void initialization();
     void play(Sound sound);
-};
+}

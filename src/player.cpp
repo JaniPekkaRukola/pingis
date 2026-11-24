@@ -31,10 +31,10 @@ bool Player::update(){
     //TODO: smooth out the distance
     //eg: if new distance is > accepted variation from previous -> discard
 
+    if (dist > 100) return true;
+
     // invert distance (since [0,0] is topleft)
     dist = SCREEN_HEIGHT - dist;
-
-    if (dist > 100.0f) return true;
 
     // out of bound top
     if (dist < 0) dist = 0;
