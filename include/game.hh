@@ -5,7 +5,6 @@
 #include "struct.hh"
 
 class Game{
-
     private:
         Player p1;
         Player p2;
@@ -18,14 +17,30 @@ class Game{
         int p1_score;
         int p2_score;
 
-        bool drawScore;     // draws score to the screen
         int winScore = 25;  // game win score
-        
-        
-        public:
+
+        bool settingsLoaded = false;    // have settings been loaded succesfully from eeprom?
+        bool statsLoaded = false;       // have stats    been loaded succesfully from eeprom?
+    
+    public:
+
+        struct gameSettings {
+            float ballSpeed = 1.0f;
+            bool increaseSpeed = true;
+            bool enableAudio = false;
+            bool drawScore = false;     // draws score to the screen
+        };
+
+        struct gameStats {
+            int gamesPlayed;
+            int totalGoals;
+            // unsigned long playtime;
+            long distanceReadTimes;
+        };
+
         Game();
         ~Game();
-        
+            
         bool gameActive;
         bool update();
         void draw();
@@ -38,6 +53,8 @@ class Game{
         void gameTimerInitialization();
         void startGameTimer();
         bool isTimeUp();
-        GameSettings settings;
+        gameSettings settings;
+        gameStats stats = {0};
+        bool askToResetStats = false;
         // bool resetGame();
 };

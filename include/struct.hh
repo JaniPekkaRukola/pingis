@@ -7,6 +7,8 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define WHITE SSD1306_WHITE
+#define ALLOWSTATSRESET true // can stats be reset from eeprom during an error. This should be false if stats are actually important
+
 
 // drawrect macro
 #define drawRectHB(display, hitbox, c) display.drawRect((hitbox).x, (hitbox).y, (hitbox).width, (hitbox).height, (c))
@@ -14,21 +16,13 @@
 
 
 
-
-
 // Structs
 // -------------------------------------------------
 
-struct Dir { // TODO: move this back to "ball.hh" cause not needed elsewhere?
+struct Dir {
     bool right = false;
     bool up = false;
     bool stationary = true;
-};
-
-struct GameSettings {
-    float ballSpeed = 1.0f;
-    bool increaseSpeed = true;
-    bool enableAudio = true; 
 };
 
 struct Vector2 {

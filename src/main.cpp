@@ -67,29 +67,24 @@ enum guiState { //TODO: move this to "struct.hh"?
     guiGame,    // game
     guiSettings,
     guiStats,    // stats from eeprom
-    guiMax,
-    guiTimeUP
+    guiTimeUP,
+    guiMax
 };
 guiState GUI = guiMenu;
 unsigned long timeUPstart = 0;
 int menuIndex = 1;
 int settingsIndex = 1;
 
-// EEPROM
-const uint16_t SIGNATURE = 0xAB42;
-const int SIGNATURE_ADDR = 0;
-const int DATA_ADDR = 2;
-
-
-
 
 // forward decls
 void initADC();
 uint16_t readAnalog(uint8_t channel);
 int getDistance(uint8_t sensor);
-void loadEEPROM();
+void loadSettingsEEPROM();
+void loadStatsEEPROM();
 void drawMenu();
 void drawSettings();
+void drawStats();
 void drawMenuBall();
 void drawTimeUP();
 bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime);
@@ -98,13 +93,25 @@ bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile uns
 
 Game game;
 
+// EEPROM
+// settings
+const uint16_t SIGNATURE_settings = 0xABCD;
+const int SIGNATURE_ADDR_settings = 0;
+const int DATA_ADDR_settings = SIGNATURE_ADDR_settings + 2;
+
+// stats
+const uint16_t SIGNATURE_stats = 0xDCBA;
+const int SIGNATURE_ADDR_stats = DATA_ADDR_settings + sizeof(Game::gameSettings);
+const int DATA_ADDR_stats = SIGNATURE_ADDR_stats + 2;
+
 void setup(){
     Serial.begin(115200);
     Buzzer::initialization();    
     game.gameTimerInitialization();
     initADC();
     randomSeed(readAnalog(2)); // seed for random ball direction on game start and on main menu
-    loadEEPROM();
+    loadSettingsEEPROM();
+    loadStatsEEPROM();
 
     DDRE &= ~(BUTTON_1 | BUTTON_2); // D2 and D3 -> INPUT
     PORTE |= BUTTON_1 | BUTTON_2; // D2 and D3 -> PULLUP ON
@@ -137,20 +144,70 @@ void setup(){
 
     GUI = guiMenu;
 
-    // game.startGame();
+    // Serial.println("\n\nEEPROM:");
+    // Serial.println("SIGNATURE_settings = " + String(SIGNATURE_settings));
+    // Serial.println("SIGNATURE_ADDR_settings = " + String(SIGNATURE_ADDR_settings));
+    // Serial.println("DATA_ADDR_settings = " + String(DATA_ADDR_settings));
+    // Serial.println("SIGNATURE_stats = " + String(SIGNATURE_stats));
+    // Serial.println("SIGNATURE_ADDR_stats = " + String(SIGNATURE_ADDR_stats));
+    // Serial.println("DATA_ADDR_stats = " + String(DATA_ADDR_stats));
 }
 
-void loadEEPROM() {
-    uint16_t storedSignature;
-    EEPROM.get(SIGNATURE_ADDR, storedSignature);
+void loadSettingsEEPROM() {
+    uint16_t storedSIGNATURE_settings;
+    EEPROM.get(SIGNATURE_ADDR_settings, storedSIGNATURE_settings);
     
-    if (storedSignature != SIGNATURE) {
-        EEPROM.put(DATA_ADDR, game.settings);
-        EEPROM.put(SIGNATURE_ADDR, SIGNATURE);
+    if (storedSIGNATURE_settings != SIGNATURE_settings) {
+        EEPROM.put(DATA_ADDR_settings, game.settings);
+        EEPROM.put(SIGNATURE_ADDR_settings, SIGNATURE_settings);
     } else {
-        EEPROM.get(DATA_ADDR, game.settings);
+        EEPROM.get(DATA_ADDR_settings, game.settings);
     }
-};
+}
+
+bool checkStatsSignature(){
+    uint16_t storedSIGNATURE_stats;
+    EEPROM.get(SIGNATURE_ADDR_stats, storedSIGNATURE_stats);
+    if (storedSIGNATURE_stats == SIGNATURE_stats) return true;
+    return false;
+}
+
+void loadStatsEEPROM(){
+    if (checkStatsSignature()){
+        EEPROM.get(DATA_ADDR_stats, game.stats);
+        // game.statsLoaded = true;
+        Serial.println(F("Stats loaded succesfully from eeprom"));
+        
+        // sanity check
+        if (game.stats.gamesPlayed < 0 || game.stats.gamesPlayed > 1000000) game.stats.gamesPlayed = 0;
+        if (game.stats.totalGoals < 0 || game.stats.totalGoals > 1000000) game.stats.totalGoals = 0;
+        // if (game.stats.playtime < 0 || game.stats.playtime > 100000000) game.stats.playtime = 0;
+        if (game.stats.distanceReadTimes < 0 || game.stats.distanceReadTimes > 100000000) game.stats.distanceReadTimes = 0;
+    }
+    else{
+        Serial.println(F("[ERROR: @loadStatsEEPROM()] Failed to load stats from eeprom (signature mismatch). Stats = 0, eeprom not affected"));
+        game.stats = {0};
+    }
+}
+
+void saveStatsEEPROM(){
+    if (checkStatsSignature()){
+        EEPROM.put(DATA_ADDR_stats, game.stats);
+        EEPROM.put(SIGNATURE_ADDR_stats, SIGNATURE_stats);
+        Serial.println(F("stats saved to eeprom succesfully"));
+    }
+    else{
+        if (ALLOWSTATSRESET){
+            Game::gameStats stats_temp = {0};
+            EEPROM.put(DATA_ADDR_stats, stats_temp);
+            EEPROM.put(SIGNATURE_ADDR_stats, SIGNATURE_stats);
+            Serial.println(F("stats reset to 0 and saved to eeprom succesfully"));
+        }
+        else{
+            Serial.println(F("[ERROR: @loadStatsEEPROM()] Failed to load stats from eeprom (signature mismatch).. Also 'ALLOWSTATSRESET' is disabled so if the stats are important, dump them and figure it out"));
+        }
+    }
+}
 
 void bombo(){
     static int x = 0;
@@ -181,9 +238,9 @@ void loop(){
 
     display.clearDisplay(); // clear display buffer
 
-    // input
+    // BUTTON 1
     if (buttonPressCheck(BUTTON_1, button1Pressed, button1PressTime)){
-        Serial.println("Button 1 was pressed");
+        if (DEBUG) Serial.println(F("Button 1 was pressed"));
         switch(GUI){
 
             case (guiGame):{
@@ -203,32 +260,17 @@ void loop(){
 
             case (guiStats):{
                 GUI = guiMenu;
+                game.askToResetStats = false;
             } break;
 
             default: { Serial.println(F("gui switch defaulted @button1Pressed")); }
         }
-
-
-
-        /*
-        if (GUI != guiMenu){
-
-        // update gui
-        GUI = static_cast<guiState>(static_cast<int>(GUI) + 1);
-            
-        if (GUI >= guiMax) GUI = guiMenu;
-        Serial.print(F("GUI = "));
-         Serial.println(GUI);
-        } else {
-        // multipurposing button 1 for menu selection and gui switching
-        menuIndex++;
-        if (menuIndex > 3) menuIndex = 1;
-        }
-        */
     }
 
+    // BUTTON 2
     if (buttonPressCheck(BUTTON_2, button2Pressed, button2PressTime)){
-        Serial.println("Button 2 was pressed");
+        if (DEBUG) Serial.println(F("Button 2 was pressed"));
+
         if (GUI == guiMenu){
             switch(menuIndex) {
                 case 1:{ GUI = guiGame; game.startGame(); } break;
@@ -253,14 +295,29 @@ void loop(){
                 } break;
 
                 case 4: {
-                    EEPROM.put(DATA_ADDR, game.settings);
+                    EEPROM.put(DATA_ADDR_settings, game.settings);
+                    settingsIndex = 1;
                     GUI = guiMenu;
                 } break;
 
                 default:{ Serial.println(F("settingsIndex switch defaulted")); }
             }
         }
+        else if (GUI == guiStats){
+            if (ALLOWSTATSRESET){
+                if (game.askToResetStats == false){
+                    game.askToResetStats = true;
+                }
+                else{
+                    game.stats = {0};
+                    saveStatsEEPROM();
+                    loadStatsEEPROM();
+                    game.askToResetStats = false;
+                }
+            }
+        }
     }
+
 
     switch(GUI){
         case (guiMenu):{
@@ -282,7 +339,6 @@ void loop(){
             game.draw();
             game.drawUI();
 
-            // drawTest(fps);
             display.display();
         } break;
 
@@ -301,9 +357,7 @@ void loop(){
         } break;
 
         case (guiStats):{
-            display.setCursor(0, 0);
-            display.setTextSize(2);
-            display.print("Stats");
+            drawStats();
             display.display();
         } break;
 
@@ -339,6 +393,8 @@ int getDistance(uint8_t sensor){    // TODO: move this to a header file
         if (rawADC < lowest) lowest = rawADC;
         
         totalADC += rawADC;
+
+        game.stats.distanceReadTimes++;
     }
 
     long filteredTotal = totalADC - highest - lowest;
@@ -360,24 +416,20 @@ int getId(){   // TODO: move this to a header file
     return random();
 }
 
+
+
+
+
 void drawMenuBall(){
     // draws a bouncing ball over the menu
     static Vector2 pos = {0,0};
-    static Vector2 vel = {1.1, 1.2};
+    static Vector2 vel = {1.2, 1.5};
     const int size = 2;
     if (pos.x + vel.x > SCREEN_WIDTH || pos.x + vel.x < 0) vel.x *= -1;
     if (pos.y + vel.y > SCREEN_HEIGHT || pos.y + vel.y < 0) vel.y *= -1;
     pos.x += vel.x;
     pos.y += vel.y;
     display.drawRect(pos.x, pos.y, size, size, WHITE);
-    float rx = random(0,100)/100.0;
-    float ry = random(0,100)/100.0;
-    float x = random(0,2);
-    float y = random(0,2);
-    x == 1 ? vel.x += rx : vel.x -= rx;
-    y == 1 ? vel.y += ry : vel.y -= ry;
-    vel.x = constrain(vel.x, -4.0f, 4.0f);
-    vel.y = constrain(vel.y, -4.0f, 4.0f);
 }
 
 void drawMenu(){
@@ -430,6 +482,7 @@ void drawSettings(){
     display.setTextSize(2);
     display.setCursor(0, 0);
     display.print("Settings");
+    display.drawLine(0, 14, SCREEN_WIDTH, 14, WHITE);
 
     Vector2 boxSize = {8, 8};
     int padding = 4;
@@ -472,6 +525,46 @@ void drawSettings(){
     display.print("Back");
 }
 
+void drawStats(){
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(2);
+    display.setCursor(0, 0);
+    display.print("Stats");
+    display.drawLine(0, 14, SCREEN_WIDTH, 14, WHITE);                                                                   
+
+    int padding = 4;
+    int y_pos = 16;
+    int x_pos = 0;
+    display.setTextSize(1);
+
+    // games played
+    display.setCursor(x_pos, y_pos);
+    display.print("Games played: ");
+    display.print(game.stats.gamesPlayed);
+    
+    // totalGoals
+    y_pos += padding + charSize_1.y;
+    display.setCursor(x_pos, y_pos);
+    display.print("Total goals: ");
+    display.print(game.stats.totalGoals);
+
+    // playtime
+    y_pos += padding + charSize_1.y;
+    display.setCursor(x_pos, y_pos);
+    // display.print("Playtime: ");
+    // display.print(game.stats.playtime);
+    display.print("Dist read: ");
+    display.print(game.stats.distanceReadTimes);
+    
+    if (game.askToResetStats){
+        display.clearDisplay();
+        display.setCursor(SCREEN_WIDTH / 2 - ((20 * charSize_1.x) / 2), SCREEN_HEIGHT / 2); // center text
+        display.println("Press button 2 again");
+        display.setCursor(SCREEN_WIDTH / 2 - ((14 * charSize_1.x) / 2), SCREEN_HEIGHT / 2 + charSize_1.y + padding);  // center text
+        display.print("to reset stats");
+    }
+}
+
 void drawTimeUP(){
     display.clearDisplay();
     display.setTextColor(SSD1306_WHITE);
@@ -511,12 +604,13 @@ bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile uns
 
 //TODO:
 /*
+-   investigate: display's rows have small black padding with mega?
 -   sensor smoothing (paddle should not jump around if sensor reads bad values)
 -   watchdog? <- is not strictly needed
 -   score uart
 -   ball friction
 -   player paddle velocity calculation
 -   bugfix: ball should bounce back from the closest edge of the paddle (currently (atleast for p1) ball bounces back from the back edge when colliding)
--   UI: add settings page
--   UI: add stats page (?)
+-   button 1 and 2 input switches are a mess
+-   move stuff to headers from main
 */

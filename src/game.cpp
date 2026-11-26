@@ -5,6 +5,7 @@
 
 #include <Adafruit_SSD1306.h>
 extern Adafruit_SSD1306 display;
+extern void saveStatsEEPROM();
 
 // Game timer
 volatile uint8_t game_time = 60; // seconds
@@ -14,7 +15,7 @@ Game::Game(){
     this->gameActive = false;
     this->gameID = 0;
     this->playerOffset = 3;
-    this->drawScore = true;
+    this->settings.drawScore = true;
     this->settings.increaseSpeed = true;
     
     // player 1 init
@@ -24,8 +25,6 @@ Game::Game(){
     this->p1.sensor = A0;
     this->p1.setId(1); // TODO uuid
     this->p1_score = 0;
-    // this->p1.name = "p1";
-
     
     // player 2 init
     this->p2.setWidth(this->paddleSize.x);
@@ -34,8 +33,6 @@ Game::Game(){
     this->p2.sensor = A1;
     this->p2.setId(2); // TODO uuid
     this->p2_score = 0;
-    // this->p2.name = "p2";
-
 
     // ball init
     this->ball.setSize(2, 2);
@@ -49,6 +46,8 @@ void Game::startGame(){
     this->ball.setDir(randomDir == 1, false, false);
     this->ball.setVelocity({this->settings.ballSpeed, 0.0});
 
+    this->stats.gamesPlayed++;
+
     this->gameActive = true;
 
     this->startGameTimer();
@@ -59,6 +58,9 @@ void Game::stopGame(){
     this->ball.setDir(false, false, true);
     this->gameActive = false;
     TIMSK1 &= ~(1 << OCIE1A); // dont compare timer interrupt anymore
+
+    saveStatsEEPROM();
+
     if (DEBUG) Serial.println(F("Game stopping"));
 }
 
@@ -105,6 +107,7 @@ bool Game::update(){
         // ball out of bounds (player 1 missed) -> player 2 scores
         else if (this->ball.getPos().x < 0){
             this->p2_score++;
+            this->stats.totalGoals++;
             if (this->settings.enableAudio) Buzzer::play(Buzzer::SCORE);
             this->ball.toggleDirX();
             roundReset();
@@ -125,6 +128,7 @@ bool Game::update(){
         // ball out of bounds (player 2 missed) -> player 1 scores
         else if (this->ball.getPos().x > SCREEN_WIDTH){
             this->p1_score++;
+            this->stats.totalGoals++;
             if (this->settings.enableAudio) Buzzer::play(Buzzer::SCORE);
             this->ball.toggleDirX();
             roundReset();
@@ -161,10 +165,11 @@ void Game::drawUI(){
     display.setCursor(58,2);
     display.print(game_time);
 
-    if (this->drawScore){
+    // if (this->drawScore){
+    if (this->settings.drawScore){
         // TODO: shift score to the left when double digits
         // TODO: make sure score is actually in the middle (is textwidth correct?)
-        int textWidth = 5;
+        int textWidth = charSize_1.x;
         int offset = 5;
         int text_pos_y = 9;
 
