@@ -57,4 +57,8 @@ class Game{
         gameStats stats = {0};
         bool askToResetStats = false;
         // bool resetGame();
+        
+        bool settingsLoaded = false;
+        bool statsLoaded = false;
+        void sendScoreUART(const char* event);
 };
