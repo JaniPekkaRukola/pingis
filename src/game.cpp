@@ -70,7 +70,7 @@ void Game::stopGame(){
 }
 
 void Game::sendScoreUART(const char* event){
-    Serial.print(F("SCORE:"));
+    // Serial.print(F("SCORE:"));
     Serial.print(event);
     Serial.print(',');
     Serial.print(this->p1_score);
@@ -174,10 +174,16 @@ void Game::draw(){
 
     // draw ball
     ball.draw();
+
+    this->drawUI();
+
 }
 
 void Game::drawUI(){
-    display.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+    // display.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+    display.drawLine(0, 0, SCREEN_WIDTH, 0, WHITE);
+    display.drawLine(0, SCREEN_HEIGHT - 1, SCREEN_WIDTH, SCREEN_HEIGHT - 1, WHITE);
+
     display.setCursor(58,2);
     display.print(game_time);
 

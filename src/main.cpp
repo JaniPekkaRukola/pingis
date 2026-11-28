@@ -89,7 +89,7 @@ void drawSettings();
 void drawStats();
 void drawMenuBall();
 void drawTimeUP();
-void centerTextAndPrint(Adafruit_SSD1306 display, const Printable& text, int textWidth, Vector2 charsize);
+// void centerTextAndPrint(Adafruit_SSD1306 display, const Printable& text, int textWidth, Vector2 charsize);
 bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime);
 
 #include "game.hh"
@@ -195,7 +195,6 @@ void loadStatsEEPROM(){
         // sanity check
         if (game.stats.gamesPlayed < 0 || game.stats.gamesPlayed > 1000000) game.stats.gamesPlayed = 0;
         if (game.stats.totalGoals < 0 || game.stats.totalGoals > 1000000) game.stats.totalGoals = 0;
-        // if (game.stats.playtime < 0 || game.stats.playtime > 100000000) game.stats.playtime = 0;
         if (game.stats.distanceReadTimes < 0 || game.stats.distanceReadTimes > 100000000) game.stats.distanceReadTimes = 0;
     }
     else{
@@ -372,7 +371,6 @@ void loop(){
             }
             game.update();
             game.draw();
-            game.drawUI();
 
             display.display();
         } break;
@@ -651,7 +649,6 @@ bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile uns
 -   BUGFIX: eventually paddles will end up at the top. Reason: "newPosCounter" combined with bad sensor readings when paddle not above sensor 
 -   investigate: display's rows have small black padding with mega?
 -   watchdog? <- is not strictly needed
--   score uart
 -   ball friction
 -   bugfix: ball should bounce back from the closest edge of the paddle (currently (atleast for p1) ball bounces back from the back edge when colliding)
 -   button 1 and 2 input switches are a mess

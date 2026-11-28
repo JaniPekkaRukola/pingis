@@ -18,8 +18,8 @@ class Game{
 
         int winScore = 25;  // game win score
 
-        bool settingsLoaded = false;    // have settings been loaded succesfully from eeprom?
-        bool statsLoaded = false;       // have stats    been loaded succesfully from eeprom?
+        // bool settingsLoaded = false;    // have settings been loaded succesfully from eeprom?
+        // bool statsLoaded = false;       // have stats    been loaded succesfully from eeprom?
     
     public:
 
