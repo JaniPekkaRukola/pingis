@@ -6,6 +6,7 @@
 #include <Adafruit_SSD1306.h>
 extern Adafruit_SSD1306 display;
 extern void saveStatsEEPROM();
+extern void saveMatchEEPROM(int p1Score, int p2Score);
 
 // Game timer
 volatile uint8_t game_time = 60; // seconds
@@ -36,6 +37,10 @@ Game::Game(){
 Game::~Game(){}
 
 void Game::startGame(){
+    this->p1_score = 0;
+    this->p2_score = 0;
+    this->ball.setPos((SCREEN_WIDTH / 2) - (this->ball.getSize().x / 2), (SCREEN_HEIGHT / 2) - (this->ball.getSize().y / 2));
+
     uint8_t randomDir = random(0,2);
     this->ball.setDir(randomDir == 1, false, false);
     this->ball.setVelocity({this->settings.ballSpeed, 0.0});
@@ -45,6 +50,7 @@ void Game::startGame(){
     this->gameActive = true;
 
     this->startGameTimer();
+    this->sendScoreUART("START");
     if (DEBUG) Serial.println(F("Game starting"));
 }
 
@@ -53,12 +59,23 @@ void Game::stopGame(){
     this->gameActive = false;
     TIMSK1 &= ~(1 << OCIE1A); // dont compare timer interrupt anymore
 
+    this->sendScoreUART("END");
     saveStatsEEPROM();
+    saveMatchEEPROM(this->p1_score, this->p2_score);
 
     p1.reset();
     p2.reset();
 
     if (DEBUG) Serial.println(F("Game stopping"));
+}
+
+void Game::sendScoreUART(const char* event){
+    Serial.print(F("SCORE:"));
+    Serial.print(event);
+    Serial.print(',');
+    Serial.print(this->p1_score);
+    Serial.print(',');
+    Serial.println(this->p2_score);
 }
 
 // bool Game::setScore(int s){
@@ -105,6 +122,7 @@ bool Game::update(){
         else if (this->ball.getPos().x < 0){
             this->p2_score++;
             this->stats.totalGoals++;
+            this->sendScoreUART("UPDATE");
             if (this->settings.enableAudio) Buzzer::play(Buzzer::SCORE);
             this->ball.toggleDirX();
             roundReset();
@@ -126,6 +144,7 @@ bool Game::update(){
         else if (this->ball.getPos().x > SCREEN_WIDTH){
             this->p1_score++;
             this->stats.totalGoals++;
+            this->sendScoreUART("UPDATE");
             if (this->settings.enableAudio) Buzzer::play(Buzzer::SCORE);
             this->ball.toggleDirX();
             roundReset();

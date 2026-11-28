@@ -82,6 +82,8 @@ uint16_t readAnalog(uint8_t channel);
 int getDistance(uint8_t sensor);
 void loadSettingsEEPROM();
 void loadStatsEEPROM();
+void loadMatchEEPROM();
+void saveMatchEEPROM(int p1Score, int p2Score); 
 void drawMenu();
 void drawSettings();
 void drawStats();
@@ -105,6 +107,16 @@ const uint16_t SIGNATURE_stats = 0xDCBA;
 const int SIGNATURE_ADDR_stats = DATA_ADDR_settings + sizeof(Game::gameSettings);
 const int DATA_ADDR_stats = SIGNATURE_ADDR_stats + 2;
 
+struct LastMatch {
+    int p1Score;
+    int p2Score;
+};
+LastMatch lastMatch = {0, 0};
+
+const uint16_t SIGNATURE_match = 0xCAFE;
+const int SIGNATURE_ADDR_match = DATA_ADDR_stats + sizeof(Game::gameStats);
+const int DATA_ADDR_match = SIGNATURE_ADDR_match + 2;
+
 void setup(){
     Serial.begin(115200);
     Buzzer::initialization();    
@@ -113,6 +125,7 @@ void setup(){
     randomSeed(readAnalog(2)); // seed for random ball direction on game start and on main menu
     loadSettingsEEPROM();
     loadStatsEEPROM();
+    loadMatchEEPROM();
 
     DDRE &= ~(BUTTON_1 | BUTTON_2); // D2 and D3 -> INPUT
     PORTE |= BUTTON_1 | BUTTON_2; // D2 and D3 -> PULLUP ON
@@ -208,6 +221,27 @@ void saveStatsEEPROM(){
             Serial.println(F("[ERROR: @loadStatsEEPROM()] Failed to load stats from eeprom (signature mismatch).. Also 'ALLOWSTATSRESET' is disabled so if the stats are important, dump them and figure it out"));
         }
     }
+}
+
+void loadMatchEEPROM(){
+    uint16_t storedSIGNATURE_match;
+    EEPROM.get(SIGNATURE_ADDR_match, storedSIGNATURE_match);
+
+    if (storedSIGNATURE_match == SIGNATURE_match){
+        EEPROM.get(DATA_ADDR_match, lastMatch);
+    }
+    else{
+        lastMatch = {0, 0};
+        EEPROM.put(DATA_ADDR_match, lastMatch);
+        EEPROM.put(SIGNATURE_ADDR_match, SIGNATURE_match);
+    }
+}
+
+void saveMatchEEPROM(int p1Score, int p2Score){
+    lastMatch.p1Score = p1Score;
+    lastMatch.p2Score = p2Score;
+    EEPROM.put(DATA_ADDR_match, lastMatch);
+    EEPROM.put(SIGNATURE_ADDR_match, SIGNATURE_match);
 }
 
 void bombo(){
