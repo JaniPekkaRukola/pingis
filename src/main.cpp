@@ -87,6 +87,7 @@ void drawSettings();
 void drawStats();
 void drawMenuBall();
 void drawTimeUP();
+void centerTextAndPrint(Adafruit_SSD1306 display, const Printable& text, int textWidth, Vector2 charsize);
 bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile unsigned long &buttonPressTime);
 
 #include "game.hh"
@@ -560,16 +561,20 @@ void drawStats(){
         display.clearDisplay();
         display.setCursor(SCREEN_WIDTH / 2 - ((20 * charSize_1.x) / 2), SCREEN_HEIGHT / 2); // center text
         display.println("Press button 2 again");
+        // centerTextAndPrint(display, "Press button 2 again", 20, charSize_1);
         display.setCursor(SCREEN_WIDTH / 2 - ((14 * charSize_1.x) / 2), SCREEN_HEIGHT / 2 + charSize_1.y + padding);  // center text
         display.print("to reset stats");
     }
 }
 
+
+
+
 void drawTimeUP(){
     display.clearDisplay();
     display.setTextColor(SSD1306_WHITE);
     display.setTextSize(2);
-    display.setCursor(16, 24);
+    display.setCursor((SCREEN_WIDTH / 2 - ((8 * charSize_2.x) / 2)), (SCREEN_HEIGHT / 2 - ((1 * charSize_2.y) / 2)));   // center text
     display.print("TIME UP!");
 }
 
@@ -601,16 +606,22 @@ bool buttonPressCheck(uint8_t button, volatile bool &buttonPressed, volatile uns
     return false;
 }
 
+// void centerTextAndPrint(Adafruit_SSD1306 display, const Printable& text, int textWidth, Vector2 charsize) {
+//     display.setCursor((SCREEN_WIDTH / 2 - ((textWidth * charsize.x) / 2)), (SCREEN_HEIGHT / 2 - ((1 * charsize.y) / 2)));
+//     display.print(text);
+// }
+
 
 //TODO:
 /*
+-   BUGFIX: eventually paddles will end up at the top. Reason: "newPosCounter" combined with bad sensor readings when paddle not above sensor 
 -   investigate: display's rows have small black padding with mega?
--   sensor smoothing (paddle should not jump around if sensor reads bad values)
 -   watchdog? <- is not strictly needed
 -   score uart
 -   ball friction
--   player paddle velocity calculation
 -   bugfix: ball should bounce back from the closest edge of the paddle (currently (atleast for p1) ball bounces back from the back edge when colliding)
 -   button 1 and 2 input switches are a mess
 -   move stuff to headers from main
+-   cleanup
+-   comments
 */

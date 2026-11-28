@@ -1,9 +1,10 @@
 #pragma once
+#include <Arduino.h> // for fabs and pow
 
 // Defines
 // -------------------------------------------------
 
-#define DEBUG true
+#define DEBUG false
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define WHITE SSD1306_WHITE
@@ -45,6 +46,16 @@ const Vector2 charSize_2 = {12, 16};    // display's character size in pixels (w
 
 // Functions
 // -------------------------------------------------
+
+inline bool anim_float_to_target(float* value, float target, float delta_t, float rate){
+    // "animates" value towards target by rate
+    *value += (target - *value) * (1.0 - pow(2.0f, -rate * delta_t));
+    if (fabs(*value - target) <= 0.001f){
+        *value = target;
+        return true;    // reached
+    }
+    return false;
+}
 
 /*
 void appendArr(float arr[], float val){

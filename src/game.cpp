@@ -13,25 +13,19 @@ volatile bool timeUp = false;
 
 Game::Game(){
     this->gameActive = false;
-    this->gameID = 0;
-    this->playerOffset = 3;
     this->settings.drawScore = true;
     this->settings.increaseSpeed = true;
     
     // player 1 init
-    this->p1.setWidth(this->paddleSize.x);
-    this->p1.setHeight(this->paddleSize.y);
-    this->p1.setPosX(playerOffset);
+    this->p1.setPosX(this->playerOffset);
     this->p1.sensor = A0;
-    this->p1.setId(1); // TODO uuid
+    this->p1.setId(1);
     this->p1_score = 0;
     
     // player 2 init
-    this->p2.setWidth(this->paddleSize.x);
-    this->p2.setHeight(this->paddleSize.y);
-    this->p2.setPosX(SCREEN_WIDTH - playerOffset - this->p2.getHitbox().width);
+    this->p2.setPosX(SCREEN_WIDTH - this->playerOffset - this->p2.getHitbox().width);
     this->p2.sensor = A1;
-    this->p2.setId(2); // TODO uuid
+    this->p2.setId(2);
     this->p2_score = 0;
 
     // ball init
@@ -60,6 +54,9 @@ void Game::stopGame(){
     TIMSK1 &= ~(1 << OCIE1A); // dont compare timer interrupt anymore
 
     saveStatsEEPROM();
+
+    p1.reset();
+    p2.reset();
 
     if (DEBUG) Serial.println(F("Game stopping"));
 }

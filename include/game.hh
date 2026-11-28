@@ -10,9 +10,8 @@ class Game{
         Player p2;
         Ball ball;
 
-        Vector2 paddleSize = {2, 20};
-        int gameID;
-        int playerOffset; // how much players are offset from the border
+        // int gameID; // useless?
+        int playerOffset = 5; // how much players are offset from the border
 
         int p1_score;
         int p2_score;
@@ -25,16 +24,15 @@ class Game{
     public:
 
         struct gameSettings {
-            float ballSpeed = 1.0f;
-            bool increaseSpeed = true;
-            bool enableAudio = false;
+            float ballSpeed = 1.0f;     // yeah
+            bool increaseSpeed = true;  // ball increases speed with every goal
+            bool enableAudio = false;   // enables buzzer
             bool drawScore = false;     // draws score to the screen
         };
 
         struct gameStats {
             int gamesPlayed;
             int totalGoals;
-            // unsigned long playtime;
             long distanceReadTimes;
         };
 

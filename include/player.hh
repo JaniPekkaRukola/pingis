@@ -7,12 +7,20 @@
 class Player{
 
     private:
-        int id;     // for saving data to eeprom
-        // int score;  // move this to game obj?
+        int id;
         Vector2 pos;
         Hitbox hitbox;
-        Vector2 velocity;
-        static const int velocitySampleCount = 3; // how many prev positions are used for velocity calculations
+        float velocity;                     // y-velocity
+        float maxMoveDelta = 20.0f;         // max accepted move-amount in a singe 'frame'. in cm
+        float maxDistance = SCREEN_HEIGHT;  // max accepted distance for paddle in cm
+        float minDistance = 1.0f;           // min accepted distance for paddle in cm
+        float jitter = 3.0f;                // how many cm can paddle shake without movement acknowledgment
+        int newPosCounter = 0;              // if paddle moves to a new position (without the travel eg: teleport), this counter tracks looping errors
+        const int newPosCounterLimit = 5;   // when "newPosCounter" hits this limit, paddle's new position is assumed
+
+        // TODO: sample count should be higher prolly
+        // TODO: this means locationHistory array append must be done manually
+        static const int velocitySampleCount = 6; // how many prev positions are used for velocity calculations
         float locationHistory[velocitySampleCount] = {0.0f};
 
     public:
@@ -23,16 +31,22 @@ class Player{
         void setPosY(int y);
         int getPosX();
         int getPosY();
-        bool setId(int id);
+        void setId(int id);
         Hitbox getHitbox();
         bool setWidth(int w);
         bool setHeight(int h);
         void calculateVelocity();
-        bool update();
+        float getVelocity();
+        // bool acceptMovement(int dist);
+        void update();
+        int updateMovement();
+        void reset();
+
+        // bool update_old();
         bool draw();
         
         uint8_t sensor;
-        char* name;
+        Vector2 paddleSize = {2, 15};
         
         // TODO: fun methods like "decreaseHeight() -> makes paddle shorter" -> make these easier by doing stuff like "setPaddleSize" or "setPaddleWidth"
 };
